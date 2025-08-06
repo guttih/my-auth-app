@@ -18,10 +18,14 @@
     "isolatedModules": true,
     "jsx": "preserve",
     "plugins": [
-      {
+    {
         "name": "next"
       }
-    ]
+    ],
+   "baseUrl": ".",              // ← This is important
+    "paths": {
+      "@/*": ["./*"]             // ← This sets up @/ as an alias to your project root
+    }
   },
   "include": [
     "next-env.d.ts",

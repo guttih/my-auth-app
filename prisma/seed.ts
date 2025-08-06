@@ -1,16 +1,18 @@
-import { PrismaClient } from '@prisma/client';
-import bcrypt from 'bcrypt';
 
-const prisma = new PrismaClient();
+import { prisma } from "@/lib/prisma";
+import bcrypt from 'bcrypt';
 
 async function main() {
   const hash = await bcrypt.hash('hunter2', 12);
+
   await prisma.user.upsert({
-    where: { email: 'admin@guttih.com' },
+    where: { username: 'guttih' },
     update: {},
     create: {
-      email: 'admin@guttih.com',
+      username: 'guttih',
+      email: 'gudjonholm@gmail.com',
       passwordHash: hash,
+      authProvider: 'LOCAL',
     },
   });
 }

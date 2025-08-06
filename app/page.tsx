@@ -11,7 +11,7 @@ export default function Home() {
     return (
       <div className="p-6">
         <h1 className="text-2xl font-bold">Welcome, {session.user?.name}!</h1>
-        <p className="mt-4">You're logged in.</p>
+        <p className="mt-4">You are logged in.</p>
         <Link href="/dashboard" className="text-blue-500 underline mt-2 inline-block">
           Go to dashboard
         </Link>

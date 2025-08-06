@@ -1,87 +1,98 @@
-# 🛠️ Setup Instructions for `my-auth-app`
+== 🛠️ Setup Instructions for `my-auth-app`
 
 This guide installs all required tools and runs the Next.js + PostgreSQL + NextAuth + Prisma app.
 
 ---
 
-## ✅ 1. Install System Requirements
+=== ✅ 1. Install System Requirements
 
-### Ubuntu / Debian
-```bash
+==== Ubuntu / Debian
+[source,bash]
+----
 sudo apt update
 sudo apt install nodejs npm postgresql postgresql-contrib
-```
+----
 
 Optional (if node version is too old):
-```bash
+[source,bash]
+----
 sudo npm install -g n
 sudo n latest
-```
+----
 
-### Fedora
+==== Fedora
 
-```bash
+[source,bash]
+----
 sudo dnf install nodejs npm postgresql postgresql-contrib postgresql-server
 
 sudo mkdir -p /var/lib/pgsql/data
 sudo chown postgres:postgres /var/lib/pgsql/data
 sudo -u postgres /usr/bin/initdb -D /var/lib/pgsql/data
-```
+----
 
 Start the server 
-```bash
+[source,bash]
+----
 #in Forground mode
 sudo -u postgres /usr/bin/postgres -D /var/lib/pgsql/data
 
 #or in Background mode
 sudo -u postgres /usr/bin/pg_ctl -D /var/lib/pgsql/data -l /var/lib/pgsql/data/logfile start
-```
+----
 
 To stop background server
-```bash
+[source,bash]
+----
 s aux | grep "postgres -D"
 sudo kill -9 <PID>
-```
+----
 
 
 ---
 
-## ✅ 2. Create PostgreSQL User and Database
+=== ✅ 2. Create PostgreSQL User and Database
 
-```bash
+[source,bash]
+----
 sudo adduser postgres
-```
+----
 
 Start psql
-```bash
+[source,bash]
+----
 sudo -u postgres psql
-```
+----
 
 In the psql prompt:
-```sql
+[source,sql]
+----
 CREATE USER guttih WITH PASSWORD 'hunter2';
 CREATE DATABASE guttihdb OWNER guttih;
 ALTER ROLE guttih CREATEDB;
 \q
-```
+----
 
-#### Configure Environment Variables
+==== Configure Environment Variables
 Create a .env file in the project root with your database connection string:
-```bash
+[source,bash]
+----
 touch .env
-```
+----
 Then edit .env to include:
 
-```env
+[source,env]
+----
 DATABASE_URL="postgresql://guttih:hunter2@localhost:5432/guttihdb"
-```
+----
 Replace `guttih` and `hunter2` with your actual PostgreSQL username and password, if different.
 
 ---
 
-## ✅ 3. Install Node.js Packages
+=== ✅ 3. Install Node.js Packages
 
-```bash
+[source,bash]
+----
 # Runtime dependencies — needed in both development and production
 npm install next react react-dom next-auth bcrypt
 
@@ -90,37 +101,43 @@ npm install -D typescript @types/react @types/node tsx
 
 npx prisma migrate dev --name init
 npx tsx prisma/seed.ts
-```
+
+npm install @prisma/client
+npx prisma generate
+
+----
 
 Gotchas to avoid:
 - npx tsx prisma/seed.ts → ❌ This needs tsx and tsconfig.json, so only run it before deploying.
- - Don’t forget .env on the server — your app will fail without DATABASE_URL.
+ - Don't forget .env on the server — your app will fail without DATABASE_URL.
 
 ---
 
-## ✅ 4. Run the App
+=== ✅ 4. Run the App
 
-```bash
+[source,bash]
+----
 npm run dev
-```
+----
 
-Then open: [http://localhost:3000/login](http://localhost:3000/login)
+Then open: http://localhost:3000/login[http://localhost:3000/login]
 
 Login credentials:
 
-- **Email:** `admin@guttih.com`
-- **Password:** `hunter2`
+- *Email:* `admin@guttih.com`
+- *Password:* `hunter2`
 
 ---
 
-## ✅ 5. Optional: Browse DB in Prisma Studio
+=== ✅ 5. Optional: Browse DB in Prisma Studio
 
-```bash
+[source,bash]
+----
 npx prisma studio
-```
+----
 
-Opens a UI at [http://localhost:5555](http://localhost:5555)
+Opens a UI at http://localhost:5555[http://localhost:5555]
 
 ---
 
-## 💥 You’re Done!
+=== 💥 Setup is Complete!

@@ -1,0 +1,17 @@
+:toc:
+:toclevels: 2
+:toc-title: Table of Contents
+
+= My Auth App
+This is a simple authentication app built with Next.js, NextAuth.js, and Prisma.
+
+It demonstrates how to set up a secure authentication system using PostgreSQL as the database.
+
+== Setup Guide
+
+include::docs/setup.adoc[]
+
+== Development
+
+include::docs/development.adoc[]
+

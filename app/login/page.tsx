@@ -5,14 +5,14 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 
 export default function LoginPage() {
-  const [email, setEmail] = useState("");
+  const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const router = useRouter();
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     const res = await signIn("credentials", {
-      email,
+      username,  // ✅ matches your auth handler
       password,
       redirect: false,
     });
@@ -25,10 +25,27 @@ export default function LoginPage() {
   }
 
   return (
-    <form onSubmit={handleSubmit}>
-      <input value={email} onChange={e => setEmail(e.target.value)} type="email" required />
-      <input value={password} onChange={e => setPassword(e.target.value)} type="password" required />
-      <button type="submit">Login</button>
+    <form onSubmit={handleSubmit} className="p-6 flex flex-col gap-4 max-w-sm mx-auto">
+      <h1 className="text-xl font-bold">Login</h1>
+      <input
+        value={username}
+        onChange={e => setUsername(e.target.value)}
+        type="text"
+        placeholder="Username"
+        required
+        className="border p-2 rounded"
+      />
+      <input
+        value={password}
+        onChange={e => setPassword(e.target.value)}
+        type="password"
+        placeholder="Password"
+        required
+        className="border p-2 rounded"
+      />
+      <button type="submit" className="bg-blue-600 text-white p-2 rounded">
+        Login
+      </button>
     </form>
   );
 }
