@@ -1,9 +1,8 @@
 import NextAuth from "next-auth";
 import { credentialsProvider } from "@/app/api/auth/providers/credentials";
-import { PrismaClient } from "@prisma/client";
-import bcrypt from "bcrypt";
+import { prisma } from "@/lib/prisma";
 
-const prisma = new PrismaClient();
+import bcrypt from "bcrypt";
 
 async function validateWithAD(username: string, password: string): Promise<boolean> {
   // Stub for now — replace with real AD validation later

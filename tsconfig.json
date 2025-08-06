@@ -24,7 +24,7 @@
     ],
    "baseUrl": ".",              // ← This is important
     "paths": {
-      "@/*": ["./*"]             // ← This sets up @/ as an alias to your project root
+      "@/*": ["src/*"]             // ← This sets up @/ as an alias to your project root
     }
   },
   "include": [
