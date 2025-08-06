@@ -1,6 +1,11 @@
-/* app/globals.css */
+/* src/app/globals.css */
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
 body {
-  font-family: sans-serif;
-  margin: 0;
-  padding: 0;
+    font-family: sans-serif;
+    margin: 0;
+    padding: 0;
 }

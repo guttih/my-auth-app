@@ -12,13 +12,21 @@ enum AuthProvider {
   AD     
 }
 
+enum Role {
+  VIEWER
+  MODERATOR
+  ADMIN
+}
+
 model User {
-  id             String   @id @default(uuid())
-  username       String   @unique
-  email          String?  @unique
-  passwordHash   String?  // null for AD users
-  authProvider   AuthProvider @default(LOCAL)
-  createdAt      DateTime @default(now())
+  id            String   @id @default(uuid())
+  username      String   @unique
+  email         String?  @unique
+  passwordHash  String?  // null for AD users
+  authProvider  AuthProvider @default(LOCAL)
+  role          Role     @default(VIEWER)
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @default(now()) @updatedAt
 }
 
 

@@ -94,23 +94,28 @@ Replace `guttih` and `hunter2` with your actual PostgreSQL username and password
 [source,bash]
 ----
 # Runtime dependencies — needed in both development and production
-npm install next react react-dom next-auth bcrypt
+npm install next react react-dom next-auth bcrypt @prisma/client
 
 # Dev dependencies — used only during development & build steps
-npm install -D typescript @types/react @types/node tsx
+npm install -D typescript @types/react @types/node tailwindcss @tailwindcss/postcss postcss autoprefixer prisma tsx
 
+npx tailwindcss init -p
+#npx prisma init
 npx prisma migrate dev --name init
 npx tsx prisma/seed.ts
-
-npm install @prisma/client
 npx prisma generate
 
 ----
 
 Gotchas to avoid:
 - npx tsx prisma/seed.ts → ❌ This needs tsx and tsconfig.json, so only run it before deploying.
- - Don't forget .env on the server — your app will fail without DATABASE_URL.
+- Don't forget .env on the server — your app will fail without DATABASE_URL.
 
+and create a **.env.local** file with someting like this:
+[source,env]
+----
+NEXTAUTH_URL=http://localhost:3000
+NEXTAUTH_SECRET=kmLumZtBmGIMkJhANnbjeAI4vPrWs78peWawyQip7U4=
 ---
 
 === ✅ 4. Run the App
