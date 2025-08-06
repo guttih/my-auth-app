@@ -15,7 +15,7 @@ export default async function DashboardPage() {
         <div className="p-6 space-y-4">
             <h1 className="text-2xl font-bold">Welcome to your dashboard 👋</h1>
             <p className="text-gray-600">This page is only accessible to logged-in users.</p>
-
+            <h1 className="text-red-500 text-3xl font-bold">Tailwind is working</h1>
             <LogoutButton />
         </div>
     );
