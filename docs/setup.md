@@ -19,6 +19,7 @@ sudo n latest
 ```
 
 ### Fedora
+
 ```bash
 sudo dnf install nodejs npm postgresql postgresql-contrib postgresql-server
 
@@ -49,7 +50,6 @@ sudo kill -9 <PID>
 
 ```bash
 sudo adduser postgres
-sudo -u postgres psql
 ```
 
 Start psql
@@ -65,42 +65,40 @@ ALTER ROLE guttih CREATEDB;
 \q
 ```
 
+#### Configure Environment Variables
+Create a .env file in the project root with your database connection string:
+```bash
+touch .env
+```
+Then edit .env to include:
+
+```env
+DATABASE_URL="postgresql://guttih:hunter2@localhost:5432/guttihdb"
+```
+Replace `guttih` and `hunter2` with your actual PostgreSQL username and password, if different.
+
 ---
 
-## ✅ 4. Install Node.js Packages
+## ✅ 3. Install Node.js Packages
 
 ```bash
-npm init -y
-npm install next react react-dom
-npm install next-auth npm bcrypt
+# Runtime dependencies — needed in both development and production
+npm install next react react-dom next-auth bcrypt
 
-npm install -D typescript @types/react @types/node
-npm install -D tsx
+# Dev dependencies — used only during development & build steps
+npm install -D typescript @types/react @types/node tsx
+
 npx prisma migrate dev --name init
 npx tsx prisma/seed.ts
 ```
 
----
-
-## ✅ 5. Install Dev Tools (if needed)
-
-If you're missing `tsx`:
-```bash
-npm install -D tsx
-```
+Gotchas to avoid:
+- npx tsx prisma/seed.ts → ❌ This needs tsx and tsconfig.json, so only run it before deploying.
+ - Don’t forget .env on the server — your app will fail without DATABASE_URL.
 
 ---
 
-## ✅ 6. Initialize Prisma and Seed DB
-
-```bash
-npx prisma migrate dev --name init
-npx tsx prisma/seed.ts
-```
-
----
-
-## ✅ 7. Run the App
+## ✅ 4. Run the App
 
 ```bash
 npm run dev
@@ -115,7 +113,7 @@ Login credentials:
 
 ---
 
-## ✅ 8. Optional: Browse DB in Prisma Studio
+## ✅ 5. Optional: Browse DB in Prisma Studio
 
 ```bash
 npx prisma studio
