@@ -39,6 +39,8 @@ export const credentialsProvider = CredentialsProvider({
             email: user.email ?? undefined,
             username: user.username,
             role: user.role,
+            theme: user.theme,
+            profileImage: user.profileImage,
         } as User;
     },
 });

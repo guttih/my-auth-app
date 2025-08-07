@@ -2,8 +2,10 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import UserForm, { UserFormData } from "@/components/User/UserForm";
+import UserForm from "@/components/User/UserForm";
+import { UserFormData } from "@/types/user";
 import { confirmDialog } from "@/components/ConfirmDialog";
+import Link from "next/link";
 
 export default function AdminUsersPage() {
     const [users, setUsers] = useState<UserFormData[]>([]);
@@ -18,8 +20,9 @@ export default function AdminUsersPage() {
                 if (!res.ok) throw new Error("Unauthorized or server error");
                 const data = await res.json();
                 setUsers(data);
-            } catch (err: any) {
-                setError(err.message);
+            } catch (err: unknown) {
+                if (err instanceof Error) setError(err.message);
+                else setError("An unknown error occurred");
             } finally {
                 setLoading(false);
             }
@@ -83,6 +86,9 @@ export default function AdminUsersPage() {
         <div className="max-w-4xl mx-auto p-6 space-y-6">
             <div className="flex justify-between items-center">
                 <h1 className="text-2xl font-bold">User Management</h1>
+                <Link href="/dashboard" className="text-blue-600 hover:underline">
+                    Dashboard
+                </Link>
                 <button
                     onClick={() => setSelectedUser({ username: "", email: "", role: "VIEWER", authProvider: "LOCAL" })}
                     className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-md shadow-sm"
@@ -99,31 +105,33 @@ export default function AdminUsersPage() {
                         <th className="border px-4 py-2">Role</th>
                         <th className="border px-4 py-2">Auth</th>
                         <th className="border px-4 py-2">Created</th>
-                        <th className="border px-4 py-2">Actions</th> {/* 👈 Add this */}
+                        <th className="border px-4 py-2">Actions</th>
                     </tr>
                 </thead>
 
                 <tbody>
-                    {users.map((user) => (
-                        <tr key={user.id} className="hover:bg-gray-50 cursor-pointer" onClick={() => setSelectedUser(user)}>
-                            <td className="border px-4 py-2">{user.username}</td>
-                            <td className="border px-4 py-2">{user.email}</td>
-                            <td className="border px-4 py-2">{user.role}</td>
-                            <td className="border px-4 py-2">{user.authProvider}</td>
-                            <td className="border px-4 py-2">{user.createdAt ? new Date(user.createdAt).toLocaleDateString() : "-"}</td>
-                            <td className="border px-4 py-2 text-center">
-                                <button
-                                    onClick={(e) => {
-                                        e.stopPropagation();
-                                        handleDeleteUser(user.id!);
-                                    }}
-                                    className="text-red-600 hover:text-red-800 font-bold text-sm"
-                                >
-                                    Delete
-                                </button>
-                            </td>
-                        </tr>
-                    ))}
+                    {users.map((user) => {
+                        return (
+                            <tr key={user.id} className="hover:bg-gray-50 cursor-pointer" onClick={() => setSelectedUser(user)}>
+                                <td className="border px-4 py-2">{user.username}</td>
+                                <td className="border px-4 py-2">{user.email}</td>
+                                <td className="border px-4 py-2">{user.role}</td>
+                                <td className="border px-4 py-2">{user.authProvider}</td>
+                                <td className="border px-4 py-2">{user.createdAt ? new Date(user.createdAt).toLocaleDateString() : "-"}</td>
+                                <td className="border px-4 py-2 text-center">
+                                    <button
+                                        onClick={(e) => {
+                                            e.stopPropagation();
+                                            handleDeleteUser(user.id!);
+                                        }}
+                                        className="text-red-600 hover:text-red-800 font-bold text-sm"
+                                    >
+                                        Delete
+                                    </button>
+                                </td>
+                            </tr>
+                        );
+                    })}
                 </tbody>
             </table>
 

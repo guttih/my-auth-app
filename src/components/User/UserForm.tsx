@@ -1,23 +1,16 @@
 // src/components/User/UserForm.tsx
 
 import { useState } from "react";
-
+import ImageUpload from "@/components/ImageUpload"; // adjust path as needed
+import type { UserFormData } from "@/types/user";
 interface UserFormProps {
     initialData?: Partial<UserFormData>;
     isAdmin?: boolean;
     onSubmit: (data: UserFormData) => void;
 }
 
-export interface UserFormData {
-    id?: string;
-    username: string;
-    email?: string;
-    password?: string;
-    role?: "VIEWER" | "MODERATOR" | "ADMIN";
-    authProvider?: "LOCAL" | "AD";
-}
-
 export default function UserForm({ initialData = {}, isAdmin = false, onSubmit }: UserFormProps) {
+    const [selectedFile, setSelectedFile] = useState<File | null>(null);
     const [formData, setFormData] = useState<UserFormData>({
         id: initialData.id,
         username: initialData.username || "",
@@ -25,6 +18,8 @@ export default function UserForm({ initialData = {}, isAdmin = false, onSubmit }
         password: "",
         role: initialData.role || "VIEWER",
         authProvider: initialData.authProvider || "LOCAL",
+        theme: initialData.theme || "light",
+        profileImage: initialData.profileImage || "",
     });
 
     function handleChange(e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) {
@@ -32,15 +27,35 @@ export default function UserForm({ initialData = {}, isAdmin = false, onSubmit }
         setFormData((prev) => ({ ...prev, [name]: value }));
     }
 
-    function handleSubmit(e: React.FormEvent) {
+    async function handleSubmit(e: React.FormEvent) {
         e.preventDefault();
-        onSubmit(formData);
+
+        let profileImagePath = formData.profileImage;
+
+        if (selectedFile && formData.id) {
+            const uploadForm = new FormData();
+            uploadForm.append("file", selectedFile);
+            uploadForm.append("filename", `user-${formData.id}`);
+
+            const res = await fetch("/api/upload/profile-image", {
+                method: "POST",
+                body: uploadForm,
+            });
+
+            if (res.ok) {
+                const data = await res.json();
+                profileImagePath = data.path;
+            }
+        }
+
+        onSubmit({ ...formData, profileImage: profileImagePath });
     }
 
     return (
         <form onSubmit={handleSubmit} className="space-y-4">
             <h2 className="text-2xl font-semibold text-center mb-4">{initialData.id ? "Edit User" : "Create User"}</h2>
 
+            {formData.id && <ImageUpload value={formData.profileImage} onChange={(file) => setSelectedFile(file)} />}
             <div>
                 <label htmlFor="username" className="block text-sm font-medium text-gray-700">
                     Username
@@ -68,6 +83,22 @@ export default function UserForm({ initialData = {}, isAdmin = false, onSubmit }
                     onChange={handleChange}
                     className="mt-1 block w-full px-4 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"
                 />
+            </div>
+
+            <div>
+                <label htmlFor="theme" className="block text-sm font-medium text-gray-700">
+                    Theme
+                </label>
+                <select
+                    id="theme"
+                    name="theme"
+                    value={formData.theme}
+                    onChange={handleChange}
+                    className="mt-1 block w-full px-4 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"
+                >
+                    <option value="light">Light</option>
+                    <option value="dark">Dark</option>
+                </select>
             </div>
 
             {isAdmin && (

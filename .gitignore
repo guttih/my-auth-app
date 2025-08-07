@@ -9,3 +9,8 @@ prisma/dev.db
 prisma/dev.db-journal
 prisma/*.sqlite
 prisma/migrations/
+
+
+# Ignore everything in avatars folder except README.md
+/public/uploads/avatars/*
+!/public/uploads/avatars/README.md

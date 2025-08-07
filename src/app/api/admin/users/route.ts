@@ -6,7 +6,9 @@ import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { hasAdminAccess } from "@/utils/auth/accessControl";
 import bcrypt from "bcrypt";
+import type { UserFormData } from "@/types/user";
 
+// Get all users
 export async function GET() {
     const session = await getServerSession(authOptions);
     if (!session || !hasAdminAccess(session.user)) {
@@ -23,21 +25,23 @@ export async function GET() {
             authProvider: true,
             createdAt: true,
             updatedAt: true,
+            theme: true,
+            profileImage: true,
         },
     });
 
     return NextResponse.json(users);
 }
 
+// Create a new user
 export async function POST(req: NextRequest) {
     const session = await getServerSession(authOptions);
     if (!session || !hasAdminAccess(session.user)) {
         return new NextResponse("Unauthorized", { status: 401 });
     }
 
-    const body = await req.json();
-    const { username, email, password, role, authProvider } = body;
-
+    const body: UserFormData = await req.json();
+    const { username, email, password, role, authProvider, theme, profileImage } = body;
     if (!username || !password) {
         return new NextResponse("Missing username or password", { status: 400 });
     }
@@ -56,6 +60,8 @@ export async function POST(req: NextRequest) {
             passwordHash,
             role: role || "VIEWER",
             authProvider: authProvider || "LOCAL",
+            theme: theme || "light",
+            profileImage: profileImage || "",
         },
         select: {
             id: true,
@@ -65,6 +71,8 @@ export async function POST(req: NextRequest) {
             authProvider: true,
             createdAt: true,
             updatedAt: true,
+            theme: true,
+            profileImage: true,
         },
     });
 

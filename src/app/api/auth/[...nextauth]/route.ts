@@ -1,7 +1,4 @@
 import NextAuth from "next-auth";
-import { credentialsProvider } from "@/app/api/auth/providers/credentials";
-import { prisma } from "@/lib/prisma";
-import bcrypt from "bcrypt";
 import { authOptions } from "@/lib/auth";
 
 async function validateWithAD(username: string, password: string): Promise<boolean> {

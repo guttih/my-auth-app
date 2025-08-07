@@ -2,7 +2,8 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import UserForm, { UserFormData } from "@/components/User/UserForm";
+import UserForm from "@/components/User/UserForm";
+import { UserFormData } from "@/types/user";
 
 export default function SelfEditForm() {
     const [userData, setUserData] = useState<Partial<UserFormData> | null>(null);
@@ -18,6 +19,8 @@ export default function SelfEditForm() {
                     id: data.id,
                     username: data.username,
                     email: data.email,
+                    theme: data.theme,
+                    profileImage: data.profileImage,
                 });
                 setLoading(false);
             })
@@ -29,14 +32,14 @@ export default function SelfEditForm() {
 
     async function handleSubmit(updatedData: UserFormData) {
         try {
-            const { username, email, password } = updatedData;
+            const { id, username, email, password, theme, profileImage } = updatedData;
 
             const res = await fetch("/api/user/self", {
                 method: "PATCH",
                 headers: {
                     "Content-Type": "application/json",
                 },
-                body: JSON.stringify({ username, email, password }),
+                body: JSON.stringify({ id, username, email, password, theme, profileImage }),
             });
 
             if (!res.ok) {

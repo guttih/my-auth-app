@@ -6,7 +6,10 @@ import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { hasAdminAccess } from "@/utils/auth/accessControl";
 import bcrypt from "bcrypt";
+import { UserFormData } from "@/types/user";
+import type { Prisma } from "@prisma/client";
 
+// Update an existing user
 export async function PATCH(req: Request, context: { params: { id: string } }) {
     const session = await getServerSession(authOptions);
     if (!session?.user || !hasAdminAccess(session.user)) {
@@ -14,10 +17,10 @@ export async function PATCH(req: Request, context: { params: { id: string } }) {
     }
 
     const { id } = await context.params;
-    const body = await req.json();
-    const { username, email, password, role, authProvider } = body;
+    const body: UserFormData = await req.json();
+    const { username, email, password, role, authProvider, theme, profileImage } = body;
 
-    const updates: any = {};
+    const updates: Prisma.UserUpdateInput = {};
     if (username) updates.username = username;
     if (email !== undefined) updates.email = email;
     if (role) updates.role = role;
@@ -25,6 +28,8 @@ export async function PATCH(req: Request, context: { params: { id: string } }) {
     if (password && password.length > 0) {
         updates.passwordHash = await bcrypt.hash(password, 10);
     }
+    if (theme) updates.theme = theme;
+    if (profileImage) updates.profileImage = profileImage;
 
     try {
         const updatedUser = await prisma.user.update({
@@ -38,6 +43,8 @@ export async function PATCH(req: Request, context: { params: { id: string } }) {
                 authProvider: true,
                 createdAt: true,
                 updatedAt: true,
+                theme: true,
+                profileImage: true,
             },
         });
 
@@ -48,6 +55,7 @@ export async function PATCH(req: Request, context: { params: { id: string } }) {
     }
 }
 
+// Delete an existing user user
 export async function DELETE(_: NextRequest, context: { params: { id: string } }) {
     const session = await getServerSession(authOptions);
     if (!session?.user || !hasAdminAccess(session.user)) {
