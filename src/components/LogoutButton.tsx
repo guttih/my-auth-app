@@ -1,11 +1,12 @@
 // src/components/LogoutButton.tsx
+"use client";
+
+import { signOut } from "next-auth/react";
+
 export default function LogoutButton() {
     return (
-        <form action="/api/auth/signout" method="POST">
-            <input type="hidden" name="callbackUrl" value="/login" />
-            <button type="submit" className="text-sm text-blue-600 hover:underline">
-                Logout
-            </button>
-        </form>
+        <button onClick={() => signOut({ callbackUrl: "/login" })} className="text-sm text-blue-600 hover:underline">
+            Logout
+        </button>
     );
 }
