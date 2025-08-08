@@ -1,3 +1,5 @@
+// src/components/ThemeInitializer.tsx
+
 "use client";
 
 import { useEffect } from "react";

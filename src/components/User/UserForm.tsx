@@ -4,6 +4,7 @@ import { useState } from "react";
 import ImageUpload from "@/components/ImageUpload";
 import type { UserFormData } from "@/types/user";
 import { Theme } from "@prisma/client";
+import { Button } from "@/components/ui/Button/Button";
 
 interface UserFormProps {
     initialData?: Partial<UserFormData>;
@@ -123,9 +124,9 @@ export default function UserForm({ initialData = {}, isAdmin = false, onSubmit }
                 <input id="password" name="password" type="password" value={formData.password || ""} onChange={handleChange} className={inputClass} />
             </div>
 
-            <button type="submit" className="w-full py-2 px-4 rounded-md shadow-sm text-white bg-blue-600 hover:bg-blue-700 transition-colors">
+            <Button type="submit" variant="important">
                 Save
-            </button>
+            </Button>
         </form>
     );
 }

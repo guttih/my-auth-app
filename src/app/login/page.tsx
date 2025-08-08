@@ -1,5 +1,6 @@
 "use client";
 
+import { Button } from "@/components/ui/Button/Button";
 import { signIn } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
@@ -93,13 +94,9 @@ export default function LoginPage() {
                         />
                     </div>
 
-                    <button
-                        type="submit"
-                        disabled={loading}
-                        className="w-full py-2 px-4 rounded-md shadow-sm text-white bg-blue-600 hover:bg-blue-700 disabled:opacity-50"
-                    >
+                    <Button type="submit" disabled={loading} className="w-full py-2 px-4" {...props}>
                         {loading ? "Signing in…" : "Sign In"}
-                    </button>
+                    </Button>
                 </form>
             </div>
         </div>

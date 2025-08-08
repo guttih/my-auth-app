@@ -4,15 +4,17 @@
 import { useEffect, useState } from "react";
 import UserForm from "@/components/User/UserForm";
 import { UserFormData } from "@/types/user";
-import { confirmDialog } from "@/components/ui/ConfirmDialog";
-import Link from "next/link";
+import { confirmDialog } from "@/components/ui/ConfirmDialog/ConfirmDialog";
+import { useRouter } from "next/navigation";
+import { Button } from "@/components/ui/Button/Button";
+import { showMessageBox } from "@/components/ui/MessageBox/MessageBox";
 
 export default function AdminUsersPage() {
     const [users, setUsers] = useState<UserFormData[]>([]);
     const [selectedUser, setSelectedUser] = useState<UserFormData | null>(null);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
-
+    const router = useRouter();
     useEffect(() => {
         const fetchUsers = async () => {
             try {
@@ -56,6 +58,12 @@ export default function AdminUsersPage() {
         }
     };
 
+    const displayMessageBox = (title: string, message: string) => {
+        showMessageBox({ title, message, variant: "information" })
+            .then(() => console.log("Message box closed"))
+            .catch((err) => console.error("Error showing message box:", err));
+    };
+
     const handleDeleteUser = async (id: string) => {
         // if (!confirm("Are you sure you want to delete this user?")) return;
 
@@ -86,15 +94,41 @@ export default function AdminUsersPage() {
         <div className="max-w-4xl mx-auto p-6 space-y-6">
             <div className="flex justify-between items-center">
                 <h1 className="text-2xl font-bold">User Management</h1>
-                <Link href="/dashboard" className="text-blue-600 hover:underline">
-                    Dashboard
-                </Link>
-                <button
-                    onClick={() => setSelectedUser({ username: "", email: "", role: "VIEWER", authProvider: "LOCAL" })}
-                    className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-md shadow-sm"
+                <Button onClick={() => showMessageBox({ title: "Welcome", message: "This is a message box example." })} variant="default">
+                    Default
+                </Button>
+                <Button onClick={() => showMessageBox({ variant: "information", title: "The gospel", message: "And the sermon content goes here." })}>
+                    information
+                </Button>
+                <Button
+                    onClick={() => showMessageBox({ variant: "secondary", title: "The gospel", message: "And the sermon content goes here." })}
+                    variant="secondary"
                 >
+                    secondary
+                </Button>
+                <Button
+                    onClick={() => showMessageBox({ variant: "success", title: "The gospel", message: "And the sermon content goes here." })}
+                    variant="success"
+                >
+                    success
+                </Button>
+                <Button
+                    onClick={() => showMessageBox({ variant: "warning", title: "The gospel", message: "And the sermon content goes here." })}
+                    variant="warning"
+                >
+                    warning
+                </Button>
+                <Button
+                    onClick={() => showMessageBox({ variant: "error", title: "The gospel", message: "And the sermon content goes here." })}
+                    variant="danger"
+                >
+                    danger
+                </Button>
+                <Button onClick={() => router.push("/dashboard")}>Dashboard</Button>
+
+                <Button onClick={() => setSelectedUser({ username: "", email: "", role: "VIEWER", authProvider: "LOCAL" })} variant="important">
                     + New User
-                </button>
+                </Button>
             </div>
 
             <table
@@ -157,7 +191,7 @@ export default function AdminUsersPage() {
 
             {selectedUser && (
                 <div className="fixed top-0 left-0 w-full h-full bg-black bg-opacity-50 flex items-center justify-center z-50">
-                    <div className="bg-white rounded shadow-lg p-6 relative w-full max-w-xl">
+                    <div className="bg-[var(--card-bg)] text-[var(--foreground)] rounded shadow-lg p-6 relative w-full max-w-xl">
                         <button onClick={() => setSelectedUser(null)} className="absolute top-2 right-2 text-gray-600 hover:text-black text-xl">
                             ×
                         </button>

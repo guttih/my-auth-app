@@ -1,4 +1,5 @@
 /* src/app/globals.css */
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
@@ -11,10 +12,25 @@ html[data-theme='light'] {
     --muted: #6b7280;
     --accent: #2563eb;
     --accent-hover: #1d4ed8;
+    --button-text: #ffffff;
     --border: #e5e7eb;
 
     --input-bg: #ffffff;
     --card-bg: #ffffff;
+
+    /* For component MessageBox.tsx */
+    --msgbox-bg-error: #ce1e1e;
+    --msgbox-text-error: #ebe9d8;
+    --msgbox-bg-warning: #d9d904;
+    --msgbox-text-warning: #c84300;
+    --msgbox-bg-success: #026023;
+    --msgbox-text-success: #c4d2c9;
+    --msgbox-bg-info: var(--accent);
+    --msgbox-text-info: var(--button-text);
+    --msgbox-bg-secondary: #e5e7eb;
+    --msgbox-text-secondary: #374151;
+    --msgbox-bg-default: #f3f4f6;
+    --msgbox-text-default: #111827;
 }
 
 /* Theme: Dark */
@@ -22,12 +38,30 @@ html[data-theme='dark'] {
     --background: #111827;
     --foreground: #f9fafb;
     --muted: #9ca3af;
-    --accent: #60a5fa;
-    --accent-hover: #3b82f6;
+    --accent: #4b5563;
+    /* Tailwind gray-600 */
+    --accent-hover: #68707b;
+    /* Tailwind gray-700 */
+    --button-text: #ffffff;
     --border: #374151;
-
-    --input-bg: #1f2937;
+    --input-bg: #2d3748;
     --card-bg: #1f2937;
+
+    /* For component MessageBox.tsx */
+    --msgbox-bg-error: #7f1d1d;
+    --msgbox-text-error: #fecaca;
+    --msgbox-bg-warning: #92400e;
+    --msgbox-text-warning: #fef08a;
+    --msgbox-bg-success: #166534;
+    --msgbox-text-success: #bbf7d0;
+
+    --msgbox-bg-info: #374151;
+    --msgbox-text-info: #e5e7eb;
+    --msgbox-bg-secondary: #1e3a8a;
+    --msgbox-text-secondary: #bfdbfe;
+
+    --msgbox-bg-default: #1f2937;
+    --msgbox-text-default: #f3f4f6;
 }
 
 /* === Base Styling === */
