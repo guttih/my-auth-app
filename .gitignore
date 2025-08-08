@@ -12,5 +12,6 @@ prisma/migrations/
 
 
 # Ignore everything in avatars folder except README.md
-/public/uploads/avatars/*
+/public/*
 !/public/uploads/avatars/README.md
+!/public/placeholder-profile.svg

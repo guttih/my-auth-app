@@ -1,19 +1,26 @@
-import { useState, useEffect } from "react";
+// src/components/ImageUpload.tsx
+import { useEffect, useRef, useState } from "react";
 
 interface ImageUploadProps {
-    value?: string; // existing image URL (e.g. /uploads/avatars/user-123.jpg)
-    onChange: (file: File | null) => void; // now returns File, not uploaded path
+    value?: string; // Existing image path or URL
+    onChange: (file: File | null) => void;
+    filename?: string;
 }
 
 export default function ImageUpload({ value, onChange }: ImageUploadProps) {
+    const inputRef = useRef<HTMLInputElement>(null);
     const [previewUrl, setPreviewUrl] = useState<string | null>(null);
 
     useEffect(() => {
-        // If no preview but we have a value, use it
+        // Fallback to value when no preview (e.g. initial load or after cancel)
         if (!previewUrl && value) {
-            setPreviewUrl(value);
+            setPreviewUrl(value.startsWith("/") ? value : `/uploads/avatars/${value}`);
         }
-    }, [value]);
+    }, [value, previewUrl]);
+
+    function handleClick() {
+        inputRef.current?.click();
+    }
 
     function handleFileChange(e: React.ChangeEvent<HTMLInputElement>) {
         const file = e.target.files?.[0];
@@ -21,13 +28,21 @@ export default function ImageUpload({ value, onChange }: ImageUploadProps) {
 
         const preview = URL.createObjectURL(file);
         setPreviewUrl(preview);
-        onChange(file); // pass the raw file to parent
+        onChange(file);
     }
 
+    const imageSrc = previewUrl || "/placeholder-profile.svg";
+
     return (
-        <div className="space-y-2">
-            {previewUrl && <img src={previewUrl} alt="Preview" className="h-24 w-24 object-cover rounded-full border" />}
-            <input type="file" accept="image/*" onChange={handleFileChange} />
+        <div className="flex justify-center mb-4">
+            <div
+                onClick={handleClick}
+                className="relative w-32 h-32 rounded-full overflow-hidden cursor-pointer border-2 border-gray-300 shadow hover:shadow-md transition"
+                title="Click to change profile image"
+            >
+                <img src={imageSrc} alt="Profile preview" className="w-full h-full object-cover" />
+                <input type="file" accept="image/*" ref={inputRef} onChange={handleFileChange} className="hidden" />
+            </div>
         </div>
     );
 }

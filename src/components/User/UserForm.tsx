@@ -55,7 +55,8 @@ export default function UserForm({ initialData = {}, isAdmin = false, onSubmit }
         <form onSubmit={handleSubmit} className="space-y-4">
             <h2 className="text-2xl font-semibold text-center mb-4">{initialData.id ? "Edit User" : "Create User"}</h2>
 
-            {formData.id && <ImageUpload value={formData.profileImage} onChange={(file) => setSelectedFile(file)} />}
+            {formData.id && <ImageUpload value={formData.profileImage} onChange={(file) => setSelectedFile(file)} filename={`user-${formData.id}`} />}
+
             <div>
                 <label htmlFor="username" className="block text-sm font-medium text-gray-700">
                     Username

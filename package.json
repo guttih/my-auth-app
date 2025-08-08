@@ -6,7 +6,8 @@
         "test": "echo \"Error: no test specified\" && exit 1",
         "dev": "next dev",
         "lint": "npx next lint",
-        "db": "npx prisma studio"
+        "dbshow": "npx prisma studio",
+        "db": "sudo -u postgres /usr/bin/postgres -D /var/lib/pgsql/data"
     },
     "keywords": [],
     "author": "Guðjón Hólm Sigurðsson",
