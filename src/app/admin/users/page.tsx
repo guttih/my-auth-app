@@ -4,7 +4,7 @@
 import { useEffect, useState } from "react";
 import UserForm from "@/components/User/UserForm";
 import { UserFormData } from "@/types/user";
-import { confirmDialog } from "@/components/ConfirmDialog";
+import { confirmDialog } from "@/components/ui/ConfirmDialog";
 import Link from "next/link";
 
 export default function AdminUsersPage() {
@@ -97,41 +97,61 @@ export default function AdminUsersPage() {
                 </button>
             </div>
 
-            <table className="min-w-full border-collapse border border-gray-300 text-sm">
-                <thead className="bg-gray-100">
+            <table
+                className="min-w-full border-collapse text-sm"
+                style={{ borderColor: "var(--border)", backgroundColor: "var(--background)", color: "var(--foreground)" }}
+            >
+                <thead style={{ backgroundColor: "var(--card-bg)" }}>
                     <tr>
-                        <th className="border px-4 py-2">Username</th>
-                        <th className="border px-4 py-2">Email</th>
-                        <th className="border px-4 py-2">Role</th>
-                        <th className="border px-4 py-2">Auth</th>
-                        <th className="border px-4 py-2">Created</th>
-                        <th className="border px-4 py-2">Actions</th>
+                        {["Username", "Email", "Role", "Auth", "Created", "Actions"].map((header) => (
+                            <th key={header} className="border px-4 py-2" style={{ borderColor: "var(--border)" }}>
+                                {header}
+                            </th>
+                        ))}
                     </tr>
                 </thead>
 
                 <tbody>
-                    {users.map((user) => {
-                        return (
-                            <tr key={user.id} className="hover:bg-gray-50 cursor-pointer" onClick={() => setSelectedUser(user)}>
-                                <td className="border px-4 py-2">{user.username}</td>
-                                <td className="border px-4 py-2">{user.email}</td>
-                                <td className="border px-4 py-2">{user.role}</td>
-                                <td className="border px-4 py-2">{user.authProvider}</td>
-                                <td className="border px-4 py-2">{user.createdAt ? new Date(user.createdAt).toLocaleDateString() : "-"}</td>
-                                <td className="border px-4 py-2 text-center">
-                                    <button
-                                        onClick={(e) => {
-                                            e.stopPropagation();
-                                            handleDeleteUser(user.id!);
-                                        }}
-                                        className="text-red-600 hover:text-red-800 font-bold text-sm"
-                                    >
-                                        Delete
-                                    </button>
-                                </td>
-                            </tr>
-                        );
-                    })}
+                    {users.map((user) => (
+                        <tr
+                            key={user.id}
+                            className="cursor-pointer"
+                            onClick={() => setSelectedUser(user)}
+                            style={{
+                                backgroundColor: "transparent",
+                            }}
+                            onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = "var(--card-bg)")}
+                            onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = "transparent")}
+                        >
+                            <td className="border px-4 py-2" style={{ borderColor: "var(--border)" }}>
+                                {user.username}
+                            </td>
+                            <td className="border px-4 py-2" style={{ borderColor: "var(--border)" }}>
+                                {user.email}
+                            </td>
+                            <td className="border px-4 py-2" style={{ borderColor: "var(--border)" }}>
+                                {user.role}
+                            </td>
+                            <td className="border px-4 py-2" style={{ borderColor: "var(--border)" }}>
+                                {user.authProvider}
+                            </td>
+                            <td className="border px-4 py-2" style={{ borderColor: "var(--border)" }}>
+                                {user.createdAt ? new Date(user.createdAt).toLocaleDateString() : "-"}
+                            </td>
+                            <td className="border px-4 py-2 text-center" style={{ borderColor: "var(--border)" }}>
+                                <button
+                                    onClick={(e) => {
+                                        e.stopPropagation();
+                                        handleDeleteUser(user.id!);
+                                    }}
+                                    className="font-bold text-sm"
+                                    style={{ color: "red" }}
+                                >
+                                    Delete
+                                </button>
+                            </td>
+                        </tr>
+                    ))}
                 </tbody>
             </table>
 

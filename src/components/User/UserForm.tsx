@@ -1,8 +1,10 @@
 // src/components/User/UserForm.tsx
 
 import { useState } from "react";
-import ImageUpload from "@/components/ImageUpload"; // adjust path as needed
+import ImageUpload from "@/components/ImageUpload";
 import type { UserFormData } from "@/types/user";
+import { Theme } from "@prisma/client";
+
 interface UserFormProps {
     initialData?: Partial<UserFormData>;
     isAdmin?: boolean;
@@ -21,6 +23,8 @@ export default function UserForm({ initialData = {}, isAdmin = false, onSubmit }
         theme: initialData.theme || "light",
         profileImage: initialData.profileImage || "",
     });
+
+    const availableThemes = Object.values(Theme);
 
     function handleChange(e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) {
         const { name, value } = e.target;
@@ -51,70 +55,49 @@ export default function UserForm({ initialData = {}, isAdmin = false, onSubmit }
         onSubmit({ ...formData, profileImage: profileImagePath });
     }
 
+    const inputClass =
+        "mt-1 block w-full px-4 py-2 border rounded-md shadow-sm bg-[var(--input-bg)] text-[var(--foreground)] border-[var(--border)] focus:ring-blue-500 focus:border-blue-500";
+
     return (
         <form onSubmit={handleSubmit} className="space-y-4">
-            <h2 className="text-2xl font-semibold text-center mb-4">{initialData.id ? "Edit User" : "Create User"}</h2>
+            <h2 className="text-2xl font-semibold text-center mb-4 text-[var(--foreground)]">{initialData.id ? "Edit User" : "Create User"}</h2>
 
             {formData.id && <ImageUpload value={formData.profileImage} onChange={(file) => setSelectedFile(file)} filename={`user-${formData.id}`} />}
 
             <div>
-                <label htmlFor="username" className="block text-sm font-medium text-gray-700">
+                <label htmlFor="username" className="block text-sm font-medium text-[var(--foreground)]">
                     Username
                 </label>
-                <input
-                    id="username"
-                    name="username"
-                    type="text"
-                    value={formData.username}
-                    onChange={handleChange}
-                    required
-                    className="mt-1 block w-full px-4 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"
-                />
+                <input id="username" name="username" type="text" value={formData.username} onChange={handleChange} required className={inputClass} />
             </div>
 
             <div>
-                <label htmlFor="email" className="block text-sm font-medium text-gray-700">
+                <label htmlFor="email" className="block text-sm font-medium text-[var(--foreground)]">
                     Email
                 </label>
-                <input
-                    id="email"
-                    name="email"
-                    type="email"
-                    value={formData.email || ""}
-                    onChange={handleChange}
-                    className="mt-1 block w-full px-4 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"
-                />
+                <input id="email" name="email" type="email" value={formData.email || ""} onChange={handleChange} className={inputClass} />
             </div>
 
             <div>
-                <label htmlFor="theme" className="block text-sm font-medium text-gray-700">
+                <label htmlFor="theme" className="block text-sm font-medium text-[var(--foreground)]">
                     Theme
                 </label>
-                <select
-                    id="theme"
-                    name="theme"
-                    value={formData.theme}
-                    onChange={handleChange}
-                    className="mt-1 block w-full px-4 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"
-                >
-                    <option value="light">Light</option>
-                    <option value="dark">Dark</option>
+                <select id="theme" name="theme" value={formData.theme} onChange={handleChange} className={inputClass}>
+                    {availableThemes.map((theme) => (
+                        <option key={theme} value={theme}>
+                            {theme.charAt(0).toUpperCase() + theme.slice(1)}
+                        </option>
+                    ))}
                 </select>
             </div>
 
             {isAdmin && (
                 <>
                     <div>
-                        <label htmlFor="role" className="block text-sm font-medium text-gray-700">
+                        <label htmlFor="role" className="block text-sm font-medium text-[var(--foreground)]">
                             Role
                         </label>
-                        <select
-                            id="role"
-                            name="role"
-                            value={formData.role}
-                            onChange={handleChange}
-                            className="mt-1 block w-full px-4 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"
-                        >
+                        <select id="role" name="role" value={formData.role} onChange={handleChange} className={inputClass}>
                             <option value="VIEWER">Viewer</option>
                             <option value="MODERATOR">Moderator</option>
                             <option value="ADMIN">Admin</option>
@@ -122,16 +105,10 @@ export default function UserForm({ initialData = {}, isAdmin = false, onSubmit }
                     </div>
 
                     <div>
-                        <label htmlFor="authProvider" className="block text-sm font-medium text-gray-700">
+                        <label htmlFor="authProvider" className="block text-sm font-medium text-[var(--foreground)]">
                             Auth Provider
                         </label>
-                        <select
-                            id="authProvider"
-                            name="authProvider"
-                            value={formData.authProvider}
-                            onChange={handleChange}
-                            className="mt-1 block w-full px-4 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"
-                        >
+                        <select id="authProvider" name="authProvider" value={formData.authProvider} onChange={handleChange} className={inputClass}>
                             <option value="LOCAL">Local</option>
                             <option value="AD">Active Directory</option>
                         </select>
@@ -140,20 +117,13 @@ export default function UserForm({ initialData = {}, isAdmin = false, onSubmit }
             )}
 
             <div>
-                <label htmlFor="password" className="block text-sm font-medium text-gray-700">
-                    Password {initialData.id && <span className="text-gray-400">(leave blank to keep current)</span>}
+                <label htmlFor="password" className="block text-sm font-medium text-[var(--foreground)]">
+                    Password {initialData.id && <span className="text-sm text-[var(--muted)]">(leave blank to keep current)</span>}
                 </label>
-                <input
-                    id="password"
-                    name="password"
-                    type="password"
-                    value={formData.password || ""}
-                    onChange={handleChange}
-                    className="mt-1 block w-full px-4 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"
-                />
+                <input id="password" name="password" type="password" value={formData.password || ""} onChange={handleChange} className={inputClass} />
             </div>
 
-            <button type="submit" className="w-full py-2 px-4 rounded-md shadow-sm text-white bg-blue-600 hover:bg-blue-700">
+            <button type="submit" className="w-full py-2 px-4 rounded-md shadow-sm text-white bg-blue-600 hover:bg-blue-700 transition-colors">
                 Save
             </button>
         </form>

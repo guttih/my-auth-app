@@ -66,6 +66,10 @@ export async function PATCH(req: Request) {
         updates.passwordHash = await bcrypt.hash(password, 10);
     }
 
+    // TODO: do I need to validate theme like this?   theme is a enum type in Prisma
+    // if (theme && !["light", "dark"].includes(theme)) {
+    //     return NextResponse.json({ error: "Invalid theme" }, { status: 400 });
+    // }
     if (theme) {
         updates.theme = theme;
     }

@@ -1,31 +1,38 @@
 /* src/app/globals.css */
-
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 @import "tailwindcss";
-/* === Base Resets & Theme === */
 
-:root {
+/* Theme: Light (default) */
+html[data-theme='light'] {
     --background: #f9fafb;
-    /* light gray background */
     --foreground: #111827;
-    /* dark text */
     --muted: #6b7280;
-    /* gray-500 for less important text */
     --accent: #2563eb;
-    /* blue-600 */
     --accent-hover: #1d4ed8;
     --border: #e5e7eb;
-    /* gray-200 */
 
-    /* Fonts */
-    --font-sans: 'Inter', system-ui, sans-serif;
-    --font-mono: 'Fira Code', monospace;
+    --input-bg: #ffffff;
+    --card-bg: #ffffff;
 }
 
+/* Theme: Dark */
+html[data-theme='dark'] {
+    --background: #111827;
+    --foreground: #f9fafb;
+    --muted: #9ca3af;
+    --accent: #60a5fa;
+    --accent-hover: #3b82f6;
+    --border: #374151;
+
+    --input-bg: #1f2937;
+    --card-bg: #1f2937;
+}
+
+/* === Base Styling === */
 html {
-    font-family: var(--font-sans);
+    font-family: 'Inter', system-ui, sans-serif;
     background-color: var(--background);
     color: var(--foreground);
     scroll-behavior: smooth;
@@ -42,7 +49,9 @@ body {
 input,
 textarea,
 select {
-    @apply px-3 py-2 border rounded-md bg-white text-sm text-black placeholder-gray-400 outline-none;
+    @apply px-3 py-2 border rounded-md text-sm placeholder-gray-400 outline-none;
+    background-color: var(--input-bg);
+    color: var(--foreground);
     border-color: var(--border);
 }
 
@@ -68,25 +77,17 @@ button.primary:hover {
 }
 
 button.secondary {
-    background-color: #e5e7eb;
+    background-color: var(--border);
     color: var(--foreground);
 }
 
 button.secondary:hover {
-    background-color: #d1d5db;
+    background-color: var(--muted);
 }
 
 /* === Cards === */
 .card {
-    @apply p-4 rounded-xl border bg-white shadow-sm;
+    @apply p-4 rounded-xl border shadow-sm;
+    background-color: var(--card-bg);
     border-color: var(--border);
-}
-
-/* === Utility Classes (custom) === */
-.label {
-    @apply block text-sm font-medium text-gray-700;
-}
-
-.input-group {
-    @apply flex flex-col gap-1 mb-4;
 }

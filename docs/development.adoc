@@ -5,7 +5,7 @@ Notes for developers while working on the project.
 List all files in the project excluding generated directories like `node_modules` and `target`:
 [source,bash]
 ----
-find . \( -path './node_modules' -o -path './.next' -o -path './.git'   \) -prune -o -print
+find . \( -path './node_modules' -o -path './.next' -o -path './.git'  -o -path './public'   \) -prune -o -print
 ----
 
 List all files in the project that are named `*:Zone.Identifier`°
@@ -25,5 +25,4 @@ Remove all `*:Zone.Identifier` files in the project: (Dangerous, use with cautio
 Prisma is an open-source database toolkit that simplifies database access and management. It provides a type-safe database client, schema migrations, and a powerful query engine.
 
 Read more about Prisma at https://www.prisma.io/docs and locally at link:../node_modules/prisma/prisma-client/README.md[Prisma Client README].
-
 

@@ -30,5 +30,8 @@ module.exports = {
         'hover:bg-purple-600',
         'ring-purple-500',
     ],
+    future: {
+        respectDefaultRingColorOpacity: true,
+    },
     plugins: [],
 };

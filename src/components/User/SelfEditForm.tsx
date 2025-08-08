@@ -46,6 +46,11 @@ export default function SelfEditForm() {
                 throw new Error("Update failed");
             }
 
+            if (theme) {
+                document.documentElement.setAttribute("data-theme", theme);
+                localStorage.setItem("theme", theme);
+            }
+
             setMessage("Profile updated successfully ✅");
         } catch (err) {
             console.error(err);

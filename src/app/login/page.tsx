@@ -32,15 +32,31 @@ export default function LoginPage() {
     };
 
     return (
-        <div className="min-h-screen flex items-center justify-center bg-gray-50">
-            <div className="bg-white shadow-xl rounded-xl p-8 w-full max-w-md border border-gray-200">
+        <div className="min-h-screen flex items-center justify-center" style={{ backgroundColor: "var(--background)", color: "var(--foreground)" }}>
+            <div
+                className="shadow-xl rounded-xl p-8 w-full max-w-md border"
+                style={{
+                    backgroundColor: "var(--card-bg)",
+                    borderColor: "var(--border)",
+                }}
+            >
                 <h1 className="text-2xl font-semibold mb-6 text-center">Sign in</h1>
 
-                {error && <div className="bg-red-100 text-red-700 p-3 mb-4 rounded text-sm text-center">{error}</div>}
+                {error && (
+                    <div
+                        className="p-3 mb-4 rounded text-sm text-center"
+                        style={{
+                            backgroundColor: "#fee2e2", // bg-red-100
+                            color: "#b91c1c", // text-red-700
+                        }}
+                    >
+                        {error}
+                    </div>
+                )}
 
                 <form onSubmit={handleSubmit} className="space-y-4">
                     <div>
-                        <label htmlFor="username" className="block text-sm font-medium text-gray-700">
+                        <label htmlFor="username" className="block text-sm font-medium" style={{ color: "var(--foreground)" }}>
                             Username
                         </label>
                         <input
@@ -49,12 +65,17 @@ export default function LoginPage() {
                             value={username}
                             onChange={(e) => setUsername(e.target.value)}
                             required
-                            className="mt-1 block w-full px-4 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"
+                            className="mt-1 block w-full px-4 py-2 border rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"
+                            style={{
+                                backgroundColor: "var(--input-bg)",
+                                color: "var(--foreground)",
+                                borderColor: "var(--border)",
+                            }}
                         />
                     </div>
 
                     <div>
-                        <label htmlFor="password" className="block text-sm font-medium text-gray-700">
+                        <label htmlFor="password" className="block text-sm font-medium" style={{ color: "var(--foreground)" }}>
                             Password
                         </label>
                         <input
@@ -63,7 +84,12 @@ export default function LoginPage() {
                             value={password}
                             onChange={(e) => setPassword(e.target.value)}
                             required
-                            className="mt-1 block w-full px-4 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"
+                            className="mt-1 block w-full px-4 py-2 border rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"
+                            style={{
+                                backgroundColor: "var(--input-bg)",
+                                color: "var(--foreground)",
+                                borderColor: "var(--border)",
+                            }}
                         />
                     </div>
 

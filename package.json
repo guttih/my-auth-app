@@ -6,8 +6,9 @@
         "test": "echo \"Error: no test specified\" && exit 1",
         "dev": "next dev",
         "lint": "npx next lint",
-        "dbshow": "npx prisma studio",
-        "db": "sudo -u postgres /usr/bin/postgres -D /var/lib/pgsql/data"
+        "db:show": "npx prisma studio",
+        "db": "sudo -u postgres /usr/bin/postgres -D /var/lib/pgsql/data",
+        "build:css": "tailwindcss -i ./src/app/globals.css -o ./public/output.css --minify"
     },
     "keywords": [],
     "author": "Guðjón Hólm Sigurðsson",
@@ -27,6 +28,7 @@
         "@tailwindcss/postcss": "^4",
         "@types/node": "24.2.0",
         "@types/react": "19.1.9",
+        "autoprefixer": "^10.4.21",
         "eslint": "9.32.0",
         "eslint-config-next": "15.4.5",
         "prisma": "^6.13.0",
