@@ -94,7 +94,7 @@ export default function LoginPage() {
                         />
                     </div>
 
-                    <Button type="submit" disabled={loading} className="w-full py-2 px-4" {...props}>
+                    <Button type="submit" disabled={loading} className="w-full py-2 px-4">
                         {loading ? "Signing in…" : "Sign In"}
                     </Button>
                 </form>

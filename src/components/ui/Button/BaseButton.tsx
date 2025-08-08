@@ -1,5 +1,6 @@
-import classNames from "classnames";
+// src/components/ui/BaseButton.tsx
 
+import classNames from "classnames";
 import { forwardRef, ButtonHTMLAttributes } from "react";
 
 export interface BaseButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
@@ -12,13 +13,13 @@ export const BaseButton = forwardRef<HTMLButtonElement, BaseButtonProps>(
     ({ children, variant = "default", size = "md", className, ...props }, ref) => {
         const base = "rounded px-3 py-1 font-medium focus:outline-none transition disabled:opacity-50 disabled:cursor-not-allowed";
 
-        const sizeMap = {
+        const sizeMap: Record<NonNullable<BaseButtonProps["size"]>, string> = {
             sm: "text-xs",
             md: "text-sm",
             lg: "text-base",
         };
 
-        const variantMap = {
+        const variantMap: Record<NonNullable<BaseButtonProps["variant"]>, string> = {
             default: "bg-[var(--accent)] text-[var(--button-text)] hover:bg-[var(--accent-hover)]",
             important: "bg-[var(--accent)] text-[var(--button-text)] hover:bg-[var(--accent-hover)]",
             danger: "bg-red-600 text-white hover:bg-red-700",
@@ -36,4 +37,4 @@ export const BaseButton = forwardRef<HTMLButtonElement, BaseButtonProps>(
     }
 );
 
-BaseButton.displayName = "BaseButton"; // Required for React DevTools with forwardRef
+BaseButton.displayName = "BaseButton";

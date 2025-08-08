@@ -58,12 +58,6 @@ export default function AdminUsersPage() {
         }
     };
 
-    const displayMessageBox = (title: string, message: string) => {
-        showMessageBox({ title, message, variant: "information" })
-            .then(() => console.log("Message box closed"))
-            .catch((err) => console.error("Error showing message box:", err));
-    };
-
     const handleDeleteUser = async (id: string) => {
         // if (!confirm("Are you sure you want to delete this user?")) return;
 
@@ -94,36 +88,7 @@ export default function AdminUsersPage() {
         <div className="max-w-4xl mx-auto p-6 space-y-6">
             <div className="flex justify-between items-center">
                 <h1 className="text-2xl font-bold">User Management</h1>
-                <Button onClick={() => showMessageBox({ title: "Welcome", message: "This is a message box example." })} variant="default">
-                    Default
-                </Button>
-                <Button onClick={() => showMessageBox({ variant: "information", title: "The gospel", message: "And the sermon content goes here." })}>
-                    information
-                </Button>
-                <Button
-                    onClick={() => showMessageBox({ variant: "secondary", title: "The gospel", message: "And the sermon content goes here." })}
-                    variant="secondary"
-                >
-                    secondary
-                </Button>
-                <Button
-                    onClick={() => showMessageBox({ variant: "success", title: "The gospel", message: "And the sermon content goes here." })}
-                    variant="success"
-                >
-                    success
-                </Button>
-                <Button
-                    onClick={() => showMessageBox({ variant: "warning", title: "The gospel", message: "And the sermon content goes here." })}
-                    variant="warning"
-                >
-                    warning
-                </Button>
-                <Button
-                    onClick={() => showMessageBox({ variant: "error", title: "The gospel", message: "And the sermon content goes here." })}
-                    variant="danger"
-                >
-                    danger
-                </Button>
+
                 <Button onClick={() => router.push("/dashboard")}>Dashboard</Button>
 
                 <Button onClick={() => setSelectedUser({ username: "", email: "", role: "VIEWER", authProvider: "LOCAL" })} variant="important">

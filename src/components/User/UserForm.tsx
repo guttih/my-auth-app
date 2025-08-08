@@ -124,7 +124,7 @@ export default function UserForm({ initialData = {}, isAdmin = false, onSubmit }
                 <input id="password" name="password" type="password" value={formData.password || ""} onChange={handleChange} className={inputClass} />
             </div>
 
-            <Button type="submit" variant="important">
+            <Button type="submit" variant="important" className="w-full py-2 px-4">
                 Save
             </Button>
         </form>
