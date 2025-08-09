@@ -1,5 +1,4 @@
 // src/app/api/user/self/route.ts
-
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
@@ -9,13 +8,10 @@ import type { Prisma } from "@prisma/client";
 
 export async function GET() {
     const session = await getServerSession(authOptions);
-
-    if (!session?.user?.name) {
-        return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
+    if (!session?.user?.id) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
     const user = await prisma.user.findUnique({
-        where: { username: session.user.name },
+        where: { id: session.user.id },
         select: {
             id: true,
             username: true,
@@ -28,68 +24,29 @@ export async function GET() {
             profileImage: true,
         },
     });
-
-    if (!user) {
-        return NextResponse.json({ error: "User not found" }, { status: 404 });
-    }
-
+    if (!user) return NextResponse.json({ error: "User not found" }, { status: 404 });
     return NextResponse.json(user);
 }
 
 export async function PATCH(req: Request) {
     const session = await getServerSession(authOptions);
+    if (!session?.user?.id) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
-    if (!session?.user?.name) {
-        return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
+    const { username, email, password, theme, profileImage } = await req.json();
 
-    const body = await req.json();
+    const updates: Partial<Prisma.UserUpdateInput> = {};
+    if (typeof username === "string") updates.username = username;
+    if (typeof email === "string" || email === null) updates.email = email;
+    if (typeof theme === "string") updates.theme = theme as any; // Prisma enum validated server-side
+    if (typeof profileImage === "string" || profileImage === null) updates.profileImage = profileImage;
+    if (password && password.length > 0) updates.passwordHash = await bcrypt.hash(password, 10);
 
-    const { id, username, email, password, theme, profileImage } = body;
-
-    if (!id || typeof id !== "string") {
-        return NextResponse.json({ error: "Invalid user id" }, { status: 400 });
-    }
-    if (!username || typeof username !== "string") {
-        return NextResponse.json({ error: "Invalid username" }, { status: 400 });
-    }
-
-    const updates: Partial<Prisma.UserUpdateInput> = {
-        username,
-    };
-
-    if (email !== undefined) {
-        updates.email = email;
-    }
-
-    if (password && password.length > 0) {
-        updates.passwordHash = await bcrypt.hash(password, 10);
-    }
-
-    // TODO: do I need to validate theme like this?   theme is a enum type in Prisma
-    // if (theme && !["light", "dark"].includes(theme)) {
-    //     return NextResponse.json({ error: "Invalid theme" }, { status: 400 });
-    // }
-    if (theme) {
-        updates.theme = theme;
-    }
-
-    if (profileImage) {
-        updates.profileImage = profileImage;
-    }
     try {
         const updated = await prisma.user.update({
-            where: { id },
+            where: { id: session.user.id }, // <- don’t trust body.id
             data: updates,
-            select: {
-                email: true,
-                role: true,
-                theme: true,
-                profileImage: true,
-                updatedAt: true,
-            },
+            select: { email: true, role: true, theme: true, profileImage: true, updatedAt: true },
         });
-
         return NextResponse.json(updated);
     } catch (err) {
         console.error("PATCH /api/user/self error:", err);

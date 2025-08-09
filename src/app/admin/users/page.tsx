@@ -7,7 +7,6 @@ import { UserFormData } from "@/types/user";
 import { confirmDialog } from "@/components/ui/ConfirmDialog/ConfirmDialog";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/Button/Button";
-import { showMessageBox } from "@/components/ui/MessageBox/MessageBox";
 
 export default function AdminUsersPage() {
     const [users, setUsers] = useState<UserFormData[]>([]);

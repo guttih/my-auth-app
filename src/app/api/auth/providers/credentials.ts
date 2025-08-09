@@ -1,13 +1,9 @@
-// credentials.ts
+// src/app/api/auth/providers/credentials.ts
 import CredentialsProvider from "next-auth/providers/credentials";
 import bcrypt from "bcrypt";
-import { prisma } from "@/lib/prisma"; // we'll extract Prisma next
-import type { User } from "next-auth";
+import { prisma } from "@/lib/prisma";
 
-async function validateWithAD(username: string, password: string): Promise<boolean> {
-    // Real implementation later
-    return false;
-}
+type Creds = { username?: string; password?: string };
 
 export const credentialsProvider = CredentialsProvider({
     name: "Credentials",
@@ -16,7 +12,8 @@ export const credentialsProvider = CredentialsProvider({
         password: { label: "Password", type: "password" },
     },
     async authorize(credentials) {
-        if (!credentials) return null;
+        const { username, password } = (credentials ?? {}) as Creds;
+        if (!username || !password) return null;
 
         const user = await prisma.user.findUnique({
             where: { username: credentials.username },
@@ -25,22 +22,24 @@ export const credentialsProvider = CredentialsProvider({
         if (!user) throw new Error("User not found");
 
         if (user.authProvider === "AD") {
-            const valid = await validateWithAD(user.username, credentials.password);
-            if (!valid) throw new Error("Invalid AD credentials");
+            // call your real AD validator later
+            throw new Error("AD users must sign in with Microsoft");
         } else {
             if (!user.passwordHash) throw new Error("Local user has no password");
             const valid = await bcrypt.compare(credentials.password, user.passwordHash);
             if (!valid) throw new Error("Invalid password");
         }
 
+        // Return minimal fields + anything you want to read in jwt callback
         return {
             id: user.id,
-            name: user.username, // Still needed for NextAuth internal compatibility
+            name: user.username ?? undefined,
             email: user.email ?? undefined,
-            username: user.username,
+            // extra fields you want to pick up in jwt/session:
+            username: user.username ?? null,
             role: user.role,
             theme: user.theme,
             profileImage: user.profileImage,
-        } as User;
+        } as any; // keep it 'any' or a local type; DON'T force next-auth User
     },
 });

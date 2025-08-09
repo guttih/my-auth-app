@@ -3,6 +3,7 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { redirect } from "next/navigation";
 import SelfEditForm from "@/components/User/SelfEditForm";
+import ConnectMicrosoftButton from "./ConnectMicrosoftButton";
 
 export default async function ProfilePage() {
     const session = await getServerSession(authOptions);
@@ -16,6 +17,7 @@ export default async function ProfilePage() {
             <h1 className="text-2xl font-bold">Your Profile</h1>
             <p className="text-gray-600">Update your account details below.</p>
             <SelfEditForm />
+            <ConnectMicrosoftButton />
         </div>
     );
 }

@@ -26,3 +26,17 @@ Prisma is an open-source database toolkit that simplifies database access and ma
 
 Read more about Prisma at https://www.prisma.io/docs and locally at link:../node_modules/prisma/prisma-client/README.md[Prisma Client README].
 
+
+==== DB commands
+
+.Open a terminal and connect to the PostgreSQL database guttihdb:
+[source,bash]
+ sudo -u postgres psql -d guttihdb
+
+[source,sql]
+----
+-- List all tables in the database
+\dt
+-- List all users in the database
+SELECT * FROM "User";
+----

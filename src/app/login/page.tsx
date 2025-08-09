@@ -1,21 +1,45 @@
+// src/app/login/page.tsx
 "use client";
 
 import { Button } from "@/components/ui/Button/Button";
 import { signIn } from "next-auth/react";
-import { useRouter } from "next/navigation";
-import { useState } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
+import { useMemo, useState } from "react";
+
+function useAuthError() {
+    const params = useSearchParams();
+    const raw = params.get("error");
+    return useMemo(() => {
+        if (!raw) return "";
+        // Friendly messages for common NextAuth errors
+        switch (raw) {
+            case "OAuthSignin":
+            case "OAuthCallback":
+            case "OAuthCreateAccount":
+            case "EmailCreateAccount":
+            case "Callback":
+                return "Something went wrong during Microsoft sign-in. Please try again.";
+            case "CredentialsSignin":
+                return "Invalid username or password.";
+            default:
+                return "Sign-in failed. Please try again.";
+        }
+    }, [params]);
+}
 
 export default function LoginPage() {
     const [username, setUsername] = useState("");
     const [password, setPassword] = useState("");
-    const [error, setError] = useState("");
-    const [loading, setLoading] = useState(false);
-    const router = useRouter();
+    const [submitting, setSubmitting] = useState(false);
 
-    const handleSubmit = async (e: React.FormEvent) => {
+    const router = useRouter();
+    const oauthError = useAuthError();
+    const [credError, setCredError] = useState("");
+
+    const onSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
-        setLoading(true);
-        setError("");
+        setSubmitting(true);
+        setCredError("");
 
         const res = await signIn("credentials", {
             username,
@@ -23,41 +47,68 @@ export default function LoginPage() {
             redirect: false,
         });
 
-        setLoading(false);
+        setSubmitting(false);
 
         if (res?.ok) {
-            router.push("/dashboard");
+            router.push("/dashboard"); // keep your existing post-login target
         } else {
-            setError("Invalid username or password");
+            setCredError("Invalid username or password");
         }
     };
+
+    const startAzure = () => signIn("azure-ad", { callbackUrl: "/dashboard" }); // or "/profile" if you prefer
+
+    // If/when you enable Google provider:
+    const startGoogle = () => signIn("google", { callbackUrl: "/dashboard" });
 
     return (
         <div className="min-h-screen flex items-center justify-center" style={{ backgroundColor: "var(--background)", color: "var(--foreground)" }}>
             <div
-                className="shadow-xl rounded-xl p-8 w-full max-w-md border"
-                style={{
-                    backgroundColor: "var(--card-bg)",
-                    borderColor: "var(--border)",
-                }}
+                className="shadow-xl rounded-xl p-8 w-full max-w-md border space-y-6"
+                style={{ backgroundColor: "var(--card-bg)", borderColor: "var(--border)" }}
             >
-                <h1 className="text-2xl font-semibold mb-6 text-center">Sign in</h1>
+                <h1 className="text-2xl font-semibold text-center">Sign in</h1>
 
-                {error && (
-                    <div
-                        className="p-3 mb-4 rounded text-sm text-center"
-                        style={{
-                            backgroundColor: "#fee2e2", // bg-red-100
-                            color: "#b91c1c", // text-red-700
-                        }}
-                    >
-                        {error}
+                {(oauthError || credError) && (
+                    <div className="p-3 rounded text-sm text-center" style={{ backgroundColor: "#fee2e2", color: "#b91c1c" }}>
+                        {oauthError || credError}
                     </div>
                 )}
 
-                <form onSubmit={handleSubmit} className="space-y-4">
+                {/* OAuth buttons */}
+                <div className="space-y-3">
+                    <Button
+                        type="button"
+                        onClick={startAzure}
+                        className="w-full py-2 px-4"
+                        variant="secondary" // if your Button supports variants
+                    >
+                        Continue with Microsoft
+                    </Button>
+
+                    {/* Uncomment when Google provider is enabled
+          <Button
+            type="button"
+            onClick={startGoogle}
+            className="w-full py-2 px-4"
+            variant="secondary"
+          >
+            Continue with Google
+          </Button>
+          */}
+                </div>
+
+                {/* Divider */}
+                <div className="flex items-center gap-3">
+                    <div className="h-px flex-1" style={{ backgroundColor: "var(--border)" }} />
+                    <span className="text-xs opacity-70">or</span>
+                    <div className="h-px flex-1" style={{ backgroundColor: "var(--border)" }} />
+                </div>
+
+                {/* Credentials form (unchanged) */}
+                <form onSubmit={onSubmit} className="space-y-4">
                     <div>
-                        <label htmlFor="username" className="block text-sm font-medium" style={{ color: "var(--foreground)" }}>
+                        <label htmlFor="username" className="block text-sm font-medium">
                             Username
                         </label>
                         <input
@@ -76,7 +127,7 @@ export default function LoginPage() {
                     </div>
 
                     <div>
-                        <label htmlFor="password" className="block text-sm font-medium" style={{ color: "var(--foreground)" }}>
+                        <label htmlFor="password" className="block text-sm font-medium">
                             Password
                         </label>
                         <input
@@ -94,8 +145,8 @@ export default function LoginPage() {
                         />
                     </div>
 
-                    <Button type="submit" disabled={loading} className="w-full py-2 px-4">
-                        {loading ? "Signing in…" : "Sign In"}
+                    <Button type="submit" disabled={submitting} className="w-full py-2 px-4">
+                        {submitting ? "Signing in…" : "Sign In"}
                     </Button>
                 </form>
             </div>
