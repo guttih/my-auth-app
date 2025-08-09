@@ -2,6 +2,7 @@
 import CredentialsProvider from "next-auth/providers/credentials";
 import bcrypt from "bcrypt";
 import { prisma } from "@/lib/prisma";
+import { AuthProvider } from "@prisma/client";
 
 type Creds = { username?: string; password?: string };
 
@@ -21,9 +22,13 @@ export const credentialsProvider = CredentialsProvider({
 
         if (!user) throw new Error("User not found");
 
-        if (user.authProvider === "AD") {
+        if (user.authProvider === AuthProvider.AD) {
             // call your real AD validator later
+            console.error("AD authentication not implemented yet");
             throw new Error("AD users must sign in with Microsoft");
+        } else if (user.authProvider === AuthProvider.GOOGLE) {
+            console.error("Google authentication not implemented yet");
+            throw new Error("Google users must sign in with Google");
         } else {
             if (!user.passwordHash) throw new Error("Local user has no password");
             const valid = await bcrypt.compare(credentials.password, user.passwordHash);
@@ -40,6 +45,6 @@ export const credentialsProvider = CredentialsProvider({
             role: user.role,
             theme: user.theme,
             profileImage: user.profileImage,
-        } as any; // keep it 'any' or a local type; DON'T force next-auth User
+        };
     },
 });

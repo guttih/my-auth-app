@@ -1,92 +1,125 @@
 // src/lib/auth.ts
 import { credentialsProvider } from "@/app/api/auth/providers/credentials";
-import azure from "@/app/api/auth/providers/azure-ad";
+import azureAdProvider from "@/app/api/auth/providers/azure-ad";
+import googleProvider from "@/app/api/auth/providers/google";
 import { prisma } from "@/lib/prisma";
 import { PrismaAdapter } from "@next-auth/prisma-adapter";
-import type { NextAuthOptions } from "next-auth";
-import { Role } from "@prisma/client";
+import type { NextAuthOptions, User } from "next-auth";
+import type { AuthProvider as AuthProviderEnum, Role } from "@prisma/client";
+
+// Narrow the providers we map
+const providerMap = {
+    "azure-ad": "AD",
+    google: "GOOGLE",
+} as const;
+type ProviderKey = keyof typeof providerMap;
+
+function mapOAuthToAuthProvider(p?: string): AuthProviderEnum | undefined {
+    return (p && (providerMap as Record<string, AuthProviderEnum>)[p]) || undefined;
+}
+
+// Type guard for user with id
+function hasId(u: unknown): u is { id: string } {
+    return typeof u === "object" && u !== null && "id" in u && typeof (u as { id: unknown }).id === "string";
+}
 
 export const authOptions: NextAuthOptions = {
     adapter: PrismaAdapter(prisma),
-    providers: [credentialsProvider, azure()],
+    providers: [credentialsProvider, azureAdProvider(), googleProvider()],
     session: { strategy: "jwt" },
     secret: process.env.NEXTAUTH_SECRET,
     pages: { signIn: "/login" },
 
     callbacks: {
         async jwt({ token, user, account }) {
-            // On first sign-in, copy DB-driven fields into the JWT
-            if (user) {
-                // @ts-expect-error: custom field
-                token.id = user.id;
-                // If user came from DB (adapter), it may already have role/username
-                // Fallback to a DB fetch only if needed.
-                if (!("role" in token)) {
+            // seed token.id once
+            if (user && hasId(user)) token.id = user.id;
+
+            // if we came via OAuth this time, set a tentative authProvider
+            if (account?.provider) {
+                const mapped = mapOAuthToAuthProvider(account.provider);
+                if (mapped) token.authProvider = mapped;
+            }
+
+            // ensure role/username/authProvider from DB (source of truth)
+            const needDb = !token.role || typeof token.username === "undefined" || !token.authProvider;
+
+            if (needDb) {
+                const where = token.id ? { id: token.id as string } : token.email ? { email: token.email as string } : null;
+
+                if (where) {
                     const db = await prisma.user.findUnique({
-                        where: user.email ? { email: user.email } : { id: (user as any).id },
+                        where,
                         select: { role: true, username: true, authProvider: true },
                     });
                     if (db) {
-                        // @ts-expect-error custom fields
                         token.role = db.role;
-                        // @ts-expect-error
-                        token.username = db.username ?? user.name ?? null;
-                        // @ts-expect-error
-                        token.authProvider = db.authProvider;
+                        token.username = db.username ?? null;
+                        token.authProvider = db.authProvider ?? token.authProvider;
                     }
                 }
             }
-
-            // If role still missing (subsequent JWT refresh), keep your original fallback:
-            if (!("role" in token) && token.email) {
-                const dbUser = await prisma.user.findUnique({
-                    where: { email: token.email as string },
-                    select: { role: true, username: true, authProvider: true },
-                });
-                if (dbUser) {
-                    // @ts-expect-error
-                    token.role = dbUser.role;
-                    // @ts-expect-error
-                    token.username = dbUser.username ?? null;
-                    // @ts-expect-error
-                    token.authProvider = dbUser.authProvider;
-                }
-            }
-
             return token;
         },
 
         async session({ session, token }) {
             if (session.user) {
-                // @ts-expect-error
-                if (token.id) session.user.id = token.id as string;
-                // @ts-expect-error
+                if (token.id) session.user.id = token.id;
                 if (token.role) session.user.role = token.role as Role;
-                // @ts-expect-error
-                if (token.username) session.user.username = token.username as string | null;
-                // @ts-expect-error
-                if (token.authProvider) session.user.authProvider = token.authProvider as "LOCAL" | "AD";
+                if (typeof token.username !== "undefined") {
+                    session.user.username = (token.username as string | null) ?? null;
+                }
+                if (token.authProvider) {
+                    session.user.authProvider = token.authProvider as AuthProviderEnum;
+                }
             }
             return session;
         },
     },
 
     events: {
-        // Runs only when a new DB user is created by the adapter (first OAuth sign-in)
+        // brand-new DB user created by OAuth or credentials
         async createUser({ user }) {
-            // Set your defaults & derived fields here
+            // Which provider created this user? (expect 1 account at this moment)
+            const accounts = await prisma.account.findMany({
+                where: { userId: user.id },
+                select: { provider: true },
+                take: 1,
+            });
+            const provider = accounts[0]?.provider as ProviderKey | undefined;
+            const mapped = mapOAuthToAuthProvider(provider);
+
+            // Build a stable username
+            const email = (user as Pick<User, "email">).email ?? null;
+            const baseName = email ? email.split("@")[0] : user.name ?? `user_${user.id.slice(0, 8)}`;
+
             await prisma.user.update({
                 where: { id: user.id },
                 data: {
-                    role: (user as any).role ?? "VIEWER",
-                    authProvider: (user as any).authProvider ?? "AD",
-                    // Prefer a stable username: before you add Google, consider a generator if needed
-                    username: (user as any).username ?? user.email?.split("@")[0] ?? user.name ?? `user_${user.id.slice(0, 8)}`,
-                    // theme/profileImage: set defaults if you want
-                    // theme: 'light',
-                    // profileImage: user.image ?? null,
+                    role: "VIEWER",
+                    authProvider: mapped ?? "LOCAL",
+                    username: baseName,
                 },
             });
+        },
+
+        // when a signed-in user links a new provider
+        async linkAccount({ user, account }) {
+            const mapped = mapOAuthToAuthProvider(account?.provider);
+            if (!mapped) return;
+
+            // policy: if currently LOCAL (or null), reflect the newly linked provider
+            const current = await prisma.user.findUnique({
+                where: { id: user.id },
+                select: { authProvider: true },
+            });
+
+            if (!current?.authProvider || current.authProvider === "LOCAL") {
+                await prisma.user.update({
+                    where: { id: user.id },
+                    data: { authProvider: mapped },
+                });
+            }
         },
     },
 };

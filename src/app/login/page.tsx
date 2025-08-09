@@ -86,16 +86,9 @@ export default function LoginPage() {
                         Continue with Microsoft
                     </Button>
 
-                    {/* Uncomment when Google provider is enabled
-          <Button
-            type="button"
-            onClick={startGoogle}
-            className="w-full py-2 px-4"
-            variant="secondary"
-          >
-            Continue with Google
-          </Button>
-          */}
+                    <Button type="button" onClick={startGoogle} className="w-full py-2 px-4" variant="secondary">
+                        Continue with Google
+                    </Button>
                 </div>
 
                 {/* Divider */}
