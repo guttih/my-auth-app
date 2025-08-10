@@ -1,5 +1,5 @@
 // src/types/next-auth.d.ts
-import type { Role, Theme, AuthProvider } from "@prisma/client";
+import type { Role, Theme } from "@prisma/client";
 import type { DefaultSession, DefaultUser } from "next-auth";
 
 declare module "next-auth" {
@@ -8,7 +8,6 @@ declare module "next-auth" {
             id: string;
             username?: string | null;
             role?: Role;
-            authProvider?: AuthProvider; // Prisma enum type
             theme?: Theme;
             profileImage?: string | null;
         } & Omit<DefaultSession["user"], "id">;
@@ -18,7 +17,6 @@ declare module "next-auth" {
         id: string;
         username?: string | null;
         role?: Role;
-        authProvider?: AuthProvider; // Prisma enum type
         theme?: Theme;
         profileImage?: string | null;
     }
@@ -29,7 +27,6 @@ declare module "next-auth/jwt" {
         id?: string;
         username?: string | null;
         role?: Role;
-        authProvider?: AuthProvider; // Prisma enum type
         theme?: Theme;
         profileImage?: string | null;
     }

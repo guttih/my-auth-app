@@ -20,7 +20,6 @@ export default function UserForm({ initialData = {}, isAdmin = false, onSubmit }
         email: initialData.email || "",
         password: "",
         role: initialData.role || "VIEWER",
-        authProvider: initialData.authProvider || "LOCAL",
         theme: initialData.theme || "light",
         profileImage: initialData.profileImage || "",
     });
@@ -102,16 +101,6 @@ export default function UserForm({ initialData = {}, isAdmin = false, onSubmit }
                             <option value="VIEWER">Viewer</option>
                             <option value="MODERATOR">Moderator</option>
                             <option value="ADMIN">Admin</option>
-                        </select>
-                    </div>
-
-                    <div>
-                        <label htmlFor="authProvider" className="block text-sm font-medium text-[var(--foreground)]">
-                            Auth Provider
-                        </label>
-                        <select id="authProvider" name="authProvider" value={formData.authProvider} onChange={handleChange} className={inputClass}>
-                            <option value="LOCAL">Local</option>
-                            <option value="AD">Active Directory</option>
                         </select>
                     </div>
                 </>

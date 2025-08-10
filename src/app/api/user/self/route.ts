@@ -17,7 +17,6 @@ export async function GET() {
             username: true,
             email: true,
             role: true,
-            authProvider: true,
             createdAt: true,
             updatedAt: true,
             theme: true,

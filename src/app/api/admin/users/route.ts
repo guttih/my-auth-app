@@ -22,7 +22,6 @@ export async function GET() {
             username: true,
             email: true,
             role: true,
-            authProvider: true,
             createdAt: true,
             updatedAt: true,
             theme: true,
@@ -41,7 +40,7 @@ export async function POST(req: NextRequest) {
     }
 
     const body: UserFormData = await req.json();
-    const { username, email, password, role, authProvider, theme, profileImage } = body;
+    const { username, email, password, role, theme, profileImage } = body;
     if (!username || !password) {
         return new NextResponse("Missing username or password", { status: 400 });
     }
@@ -59,7 +58,6 @@ export async function POST(req: NextRequest) {
             email,
             passwordHash,
             role: role || "VIEWER",
-            authProvider: authProvider || "LOCAL",
             theme: theme || "light",
             profileImage: profileImage || "",
         },
@@ -68,7 +66,6 @@ export async function POST(req: NextRequest) {
             username: true,
             email: true,
             role: true,
-            authProvider: true,
             createdAt: true,
             updatedAt: true,
             theme: true,

@@ -90,7 +90,7 @@ export default function AdminUsersPage() {
 
                 <Button onClick={() => router.push("/dashboard")}>Dashboard</Button>
 
-                <Button onClick={() => setSelectedUser({ username: "", email: "", role: "VIEWER", authProvider: "LOCAL" })} variant="important">
+                <Button onClick={() => setSelectedUser({ username: "", email: "", role: "VIEWER" })} variant="important">
                     + New User
                 </Button>
             </div>
@@ -129,9 +129,6 @@ export default function AdminUsersPage() {
                             </td>
                             <td className="border px-4 py-2" style={{ borderColor: "var(--border)" }}>
                                 {user.role}
-                            </td>
-                            <td className="border px-4 py-2" style={{ borderColor: "var(--border)" }}>
-                                {user.authProvider}
                             </td>
                             <td className="border px-4 py-2" style={{ borderColor: "var(--border)" }}>
                                 {user.createdAt ? new Date(user.createdAt).toLocaleDateString() : "-"}

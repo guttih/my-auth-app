@@ -18,13 +18,12 @@ export async function PATCH(req: Request, context: { params: { id: string } }) {
 
     const { id } = await context.params;
     const body: UserFormData = await req.json();
-    const { username, email, password, role, authProvider, theme, profileImage } = body;
+    const { username, email, password, role, theme, profileImage } = body;
 
     const updates: Prisma.UserUpdateInput = {};
     if (username) updates.username = username;
     if (email !== undefined) updates.email = email;
     if (role) updates.role = role;
-    if (authProvider) updates.authProvider = authProvider;
     if (password && password.length > 0) {
         updates.passwordHash = await bcrypt.hash(password, 10);
     }
@@ -40,7 +39,6 @@ export async function PATCH(req: Request, context: { params: { id: string } }) {
                 username: true,
                 email: true,
                 role: true,
-                authProvider: true,
                 createdAt: true,
                 updatedAt: true,
                 theme: true,

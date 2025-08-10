@@ -3,18 +3,7 @@ import getProviders from "@/app/api/auth/providers";
 import { prisma } from "@/lib/prisma";
 import { PrismaAdapter } from "@next-auth/prisma-adapter";
 import type { NextAuthOptions, User } from "next-auth";
-import type { AuthProvider as AuthProviderEnum, Role } from "@prisma/client";
-
-// Narrow the providers we map
-const providerMap = {
-    "azure-ad": "AD",
-    google: "GOOGLE",
-} as const;
-type ProviderKey = keyof typeof providerMap;
-
-function mapOAuthToAuthProvider(p?: string): AuthProviderEnum | undefined {
-    return (p && (providerMap as Record<string, AuthProviderEnum>)[p]) || undefined;
-}
+import type { Role } from "@prisma/client";
 
 // Type guard for user with id
 function hasId(u: unknown): u is { id: string } {
@@ -33,43 +22,39 @@ export const authOptions: NextAuthOptions = {
             // seed token.id once
             if (user && hasId(user)) token.id = user.id;
 
-            // if we came via OAuth this time, set a tentative authProvider
-            if (account?.provider) {
-                const mapped = mapOAuthToAuthProvider(account.provider);
-                if (mapped) token.authProvider = mapped;
-            }
-
-            // ensure role/username/authProvider from DB (source of truth)
-            const needDb = !token.role || typeof token.username === "undefined" || !token.authProvider;
-
+            // ensure role/username from DB (source of truth)
+            const needDb = !token.role || typeof token.username === "undefined";
             if (needDb) {
                 const where = token.id ? { id: token.id as string } : token.email ? { email: token.email as string } : null;
 
                 if (where) {
                     const db = await prisma.user.findUnique({
                         where,
-                        select: { role: true, username: true, authProvider: true },
+                        select: { role: true, username: true },
                     });
                     if (db) {
                         token.role = db.role;
                         token.username = db.username ?? null;
-                        token.authProvider = db.authProvider ?? token.authProvider;
                     }
                 }
             }
+
+            // Optionally record the last OAuth provider used on this login (not stored in DB)
+            if (account?.provider) {
+                token.lastProvider = account.provider; // harmless convenience field
+            }
+
             return token;
         },
 
         async session({ session, token }) {
             if (session.user) {
-                if (token.id) session.user.id = token.id;
+                if (token.id) session.user.id = token.id as string;
                 if (token.role) session.user.role = token.role as Role;
                 if (typeof token.username !== "undefined") {
                     session.user.username = (token.username as string | null) ?? null;
                 }
-                if (token.authProvider) {
-                    session.user.authProvider = token.authProvider as AuthProviderEnum;
-                }
+                // no authProvider on session anymore
             }
             return session;
         },
@@ -78,15 +63,6 @@ export const authOptions: NextAuthOptions = {
     events: {
         // brand-new DB user created by OAuth or credentials
         async createUser({ user }) {
-            // Which provider created this user? (expect 1 account at this moment)
-            const accounts = await prisma.account.findMany({
-                where: { userId: user.id },
-                select: { provider: true },
-                take: 1,
-            });
-            const provider = accounts[0]?.provider as ProviderKey | undefined;
-            const mapped = mapOAuthToAuthProvider(provider);
-
             // Build a stable username
             const email = (user as Pick<User, "email">).email ?? null;
             const baseName = email ? email.split("@")[0] : user.name ?? `user_${user.id.slice(0, 8)}`;
@@ -95,29 +71,14 @@ export const authOptions: NextAuthOptions = {
                 where: { id: user.id },
                 data: {
                     role: "VIEWER",
-                    authProvider: mapped ?? "LOCAL",
                     username: baseName,
                 },
             });
         },
 
         // when a signed-in user links a new provider
-        async linkAccount({ user, account }) {
-            const mapped = mapOAuthToAuthProvider(account?.provider);
-            if (!mapped) return;
-
-            // policy: if currently LOCAL (or null), reflect the newly linked provider
-            const current = await prisma.user.findUnique({
-                where: { id: user.id },
-                select: { authProvider: true },
-            });
-
-            if (!current?.authProvider || current.authProvider === "LOCAL") {
-                await prisma.user.update({
-                    where: { id: user.id },
-                    data: { authProvider: mapped },
-                });
-            }
+        async linkAccount() {
+            // Linked providers are read live from next-auth Account table.
         },
     },
 };
