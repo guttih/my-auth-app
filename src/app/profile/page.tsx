@@ -3,9 +3,9 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { redirect } from "next/navigation";
 import SelfEditForm from "@/components/User/SelfEditForm";
-import ConnectMicrosoftButton from "./ConnectMicrosoftButton";
-import ConnectGoogleButton from "./ConnectGoogleButton";
-import ConnectedAccountsPanel from "./ConnectedAccountsPanel";
+import ConnectMicrosoftButton from "@/components/User/ConnectMicrosoftButton";
+import ConnectGoogleButton from "@/components/User/ConnectGoogleButton";
+import ConnectedAccountsPanel from "@/components/User/ConnectedAccountsPanel";
 import Link from "next/link";
 
 export default async function ProfilePage() {

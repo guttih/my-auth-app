@@ -7,6 +7,7 @@ import { UserFormData } from "@/types/user";
 import { confirmDialog } from "@/components/ui/ConfirmDialog/ConfirmDialog";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/Button/Button";
+import ConnectedAccountsPanel from "@/components/User/ConnectedAccountsPanel";
 
 export default function AdminUsersPage() {
     const [users, setUsers] = useState<UserFormData[]>([]);
@@ -157,6 +158,7 @@ export default function AdminUsersPage() {
                             ×
                         </button>
                         <UserForm initialData={selectedUser} isAdmin={true} onSubmit={handleFormSubmit} />
+                        <ConnectedAccountsPanel userId={selectedUser.id} showConnectButtons={false} allowUnlink={true} />
                     </div>
                 </div>
             )}
