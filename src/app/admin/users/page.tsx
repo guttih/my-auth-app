@@ -102,7 +102,7 @@ export default function AdminUsersPage() {
             >
                 <thead style={{ backgroundColor: "var(--card-bg)" }}>
                     <tr>
-                        {["Username", "Email", "Role", "Auth", "Created", "Actions"].map((header) => (
+                        {["Username", "Email", "Role", "Auth", "Created"].map((header) => (
                             <th key={header} className="border px-4 py-2" style={{ borderColor: "var(--border)" }}>
                                 {header}
                             </th>
@@ -158,7 +158,7 @@ export default function AdminUsersPage() {
                             ×
                         </button>
                         <UserForm initialData={selectedUser} isAdmin={true} onSubmit={handleFormSubmit} />
-                        <ConnectedAccountsPanel userId={selectedUser.id} showConnectButtons={false} allowUnlink={true} />
+                        {selectedUser.id && <ConnectedAccountsPanel userId={selectedUser.id} showConnectButtons={false} allowUnlink={true} />}
                     </div>
                 </div>
             )}
