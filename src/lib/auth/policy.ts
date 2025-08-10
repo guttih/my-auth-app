@@ -33,6 +33,7 @@ export async function getLinkedProviders(userId: string) {
 // Optional per-user policy fields (wire later if/when you add them to Prisma)
 export type OAuthPolicy = "ANY" | "MICROSOFT_ONLY" | "GOOGLE_ONLY" | "NONE";
 
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 export async function getUserPolicy(userId: string): Promise<{
     passwordEnabled: boolean;
     oauthPolicy: OAuthPolicy;

@@ -3,11 +3,22 @@ import getProviders from "@/app/api/auth/providers";
 import { prisma } from "@/lib/prisma";
 import { PrismaAdapter } from "@next-auth/prisma-adapter";
 import type { NextAuthOptions, User } from "next-auth";
-import type { Role } from "@prisma/client";
+import type { Role, Theme } from "@prisma/client";
 
 // Type guard for user with id
 function hasId(u: unknown): u is { id: string } {
     return typeof u === "object" && u !== null && "id" in u && typeof (u as { id: unknown }).id === "string";
+}
+
+// Small helpers to avoid `any`
+function setTokenTheme(token: unknown, theme: Theme) {
+    (token as Record<string, unknown>).theme = theme;
+}
+function getTokenTheme(token: unknown): Theme | undefined {
+    return (token as Record<string, unknown>).theme as Theme | undefined;
+}
+function hasTokenTheme(token: unknown): boolean {
+    return typeof (token as Record<string, unknown>).theme !== "undefined";
 }
 
 export const authOptions: NextAuthOptions = {
@@ -18,31 +29,40 @@ export const authOptions: NextAuthOptions = {
     pages: { signIn: "/login" },
 
     callbacks: {
-        async jwt({ token, user, account }) {
-            // seed token.id once
+        async jwt({ token, user, account, trigger, session }) {
             if (user && hasId(user)) token.id = user.id;
 
-            // ensure role/username from DB (source of truth)
-            const needDb = !token.role || typeof token.username === "undefined";
+            // Reflect client-side session.update({ theme }) into token
+            if (trigger === "update" && session?.theme) {
+                setTokenTheme(token, session.theme as Theme);
+            }
+
+            // ensure role/username/theme from DB (source of truth)
+            const needDb = !token.role || typeof token.username === "undefined" || !hasTokenTheme(token);
+
             if (needDb) {
                 const where = token.id ? { id: token.id as string } : token.email ? { email: token.email as string } : null;
 
                 if (where) {
                     const db = await prisma.user.findUnique({
                         where,
-                        select: { role: true, username: true },
+                        select: { role: true, username: true, theme: true },
                     });
                     if (db) {
                         token.role = db.role;
                         token.username = db.username ?? null;
+                        setTokenTheme(token, (db.theme ?? "light") as Theme);
+                    }
+                } else {
+                    // fallback default if we couldn't resolve a user
+                    if (!hasTokenTheme(token)) {
+                        setTokenTheme(token, "light" as Theme);
                     }
                 }
             }
 
-            // Optionally record the last OAuth provider used on this login (not stored in DB)
-            if (account?.provider) {
-                token.lastProvider = account.provider; // harmless convenience field
-            }
+            // remember last OAuth provider (convenience only)
+            if (account?.provider) token.lastProvider = account.provider;
 
             return token;
         },
@@ -54,16 +74,15 @@ export const authOptions: NextAuthOptions = {
                 if (typeof token.username !== "undefined") {
                     session.user.username = (token.username as string | null) ?? null;
                 }
-                // no authProvider on session anymore
+                // expose theme to session so layout SSR can use it
+                session.user.theme = getTokenTheme(token) ?? "light";
             }
             return session;
         },
     },
 
     events: {
-        // brand-new DB user created by OAuth or credentials
         async createUser({ user }) {
-            // Build a stable username
             const email = (user as Pick<User, "email">).email ?? null;
             const baseName = email ? email.split("@")[0] : user.name ?? `user_${user.id.slice(0, 8)}`;
 
@@ -72,13 +91,13 @@ export const authOptions: NextAuthOptions = {
                 data: {
                     role: "VIEWER",
                     username: baseName,
+                    // leave theme as DB default ('light') or whatever you set in Prisma
                 },
             });
         },
-
-        // when a signed-in user links a new provider
-        async linkAccount() {
-            // Linked providers are read live from next-auth Account table.
+        async signIn({ user, account }) {
+            console.log(`User ${user.id} signed in with provider ${account?.provider}`);
         },
+        async linkAccount() {},
     },
 };

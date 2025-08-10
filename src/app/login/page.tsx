@@ -31,7 +31,7 @@ function humanizeQueryError(raw?: string | null) {
 function useAuthError() {
     const params = useSearchParams();
     const raw = params.get("error");
-    return useMemo(() => humanizeQueryError(raw), [params, raw]);
+    return useMemo(() => humanizeQueryError(raw), [raw]);
 }
 
 export default function LoginPage() {
@@ -105,8 +105,18 @@ export default function LoginPage() {
             const result = await signIn("credentials", { username: uname, password, redirect: false });
             setSubmitting(false);
 
-            if (result?.ok) router.push("/dashboard");
-            else setCredError("Invalid username or password");
+            if (result?.ok) {
+                try {
+                    const me = await fetch("/api/user/self", { cache: "no-store" }).then((r) => r.json());
+                    if (me?.theme) localStorage.setItem("theme", me.theme);
+                    const html = document.documentElement;
+                    html.setAttribute("data-theme", me.theme || "light");
+                } catch {
+                    /* non-fatal */
+                }
+
+                router.push("/dashboard");
+            } else setCredError("Invalid username or password");
         } catch {
             setSubmitting(false);
             setCredError("Network error. Please try again.");
@@ -182,12 +192,12 @@ export default function LoginPage() {
                 {(showAzure || showGoogle) && (
                     <div className="space-y-3">
                         {showAzure && (
-                            <Button type="button" onClick={startAzure} className="w-full py-2 px-4" variant="secondary">
+                            <Button type="button" onClick={startAzure} className="w-full py-2 px-4">
                                 Continue with Microsoft
                             </Button>
                         )}
                         {showGoogle && (
-                            <Button type="button" onClick={startGoogle} className="w-full py-2 px-4" variant="secondary">
+                            <Button type="button" onClick={startGoogle} className="w-full py-2 px-4">
                                 Continue with Google
                             </Button>
                         )}

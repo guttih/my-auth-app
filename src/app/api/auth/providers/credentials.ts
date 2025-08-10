@@ -4,8 +4,6 @@ import bcrypt from "bcrypt";
 import { prisma } from "@/lib/prisma";
 import { visibleProvidersForUser } from "@/lib/auth/decide";
 
-type Creds = { username?: string; password?: string };
-
 export const credentialsProvider = CredentialsProvider({
     name: "Credentials",
     credentials: {

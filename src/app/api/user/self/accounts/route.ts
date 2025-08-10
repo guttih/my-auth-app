@@ -4,14 +4,49 @@ import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { NextResponse } from "next/server";
 
+function decodeJwtPayload(token?: string | null) {
+    if (!token) return {};
+    try {
+        const [, payload] = token.split(".");
+        const json = Buffer.from(payload, "base64url").toString("utf8");
+        return JSON.parse(json);
+    } catch {
+        return {};
+    }
+}
+
 export async function GET() {
     const session = await getServerSession(authOptions);
-    if (!session?.user?.id) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    if (!session?.user?.id) {
+        return NextResponse.json({ accounts: [] });
+    }
 
-    const accounts = await prisma.account.findMany({
+    const rows = await prisma.account.findMany({
         where: { userId: session.user.id },
-        select: { id: true, provider: true, providerAccountId: true },
+        select: {
+            id: true,
+            provider: true,
+            providerAccountId: true,
+            id_token: true, // Prisma/NextAuth column (nullable)
+        },
+        orderBy: { provider: "asc" },
     });
+
+    const accounts = rows.map((a) => {
+        const claims: any = decodeJwtPayload(a.id_token);
+        // Prefer email-like identifiers
+        const label = claims?.email || claims?.preferred_username || claims?.upn || claims?.unique_name || claims?.name || a.providerAccountId; // fallback
+        const picture = claims?.picture as string | undefined;
+
+        return {
+            id: a.id,
+            provider: a.provider, // "google" | "azure-ad"
+            providerAccountId: a.providerAccountId,
+            label, // what we show (email/username)
+            picture, // optional avatar (Google usually has it)
+        };
+    });
+
     return NextResponse.json({ accounts });
 }
 

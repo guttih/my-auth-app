@@ -1,8 +1,13 @@
-// src/app/profile/ConnectedAccountsPanel.tsx
 "use client";
 import { useEffect, useState } from "react";
 
-type LinkedAccount = { id: string; provider: string; providerAccountId: string };
+type LinkedAccount = {
+    id: string;
+    provider: "google" | "azure-ad" | string;
+    providerAccountId: string;
+    label?: string; // email/username/name
+    picture?: string; // google avatar if present
+};
 
 export default function ConnectedAccountsPanel() {
     const [accounts, setAccounts] = useState<LinkedAccount[]>([]);
@@ -41,9 +46,24 @@ export default function ConnectedAccountsPanel() {
     return (
         <div className="space-y-2">
             <h2 className="font-semibold">Linked accounts</h2>
+
             {accounts.map((a) => (
                 <div key={a.id} className="flex items-center justify-between rounded border px-3 py-2">
-                    <div className="font-mono">{a.provider}</div>
+                    <div className="flex items-center gap-3">
+                        {/* Provider icon (optional) */}
+                        <span className="w-6 h-6 grid place-items-center rounded-full bg-gray-600 text-white text-xs uppercase">
+                            {a.provider === "google" ? "G" : a.provider === "azure-ad" ? "MS" : a.provider[0]}
+                        </span>
+
+                        {/* Avatar if present (google) */}
+                        {a.picture ? <img src={a.picture} alt="" className="w-6 h-6 rounded-full" /> : null}
+
+                        <div className="flex flex-col">
+                            <div className="font-medium capitalize">{a.provider.replace("-", " ")}</div>
+                            <div className="text-sm opacity-75 font-mono">{a.label ?? a.providerAccountId}</div>
+                        </div>
+                    </div>
+
                     <button className="text-sm underline" onClick={() => unlink(a.id)}>
                         Unlink
                     </button>
