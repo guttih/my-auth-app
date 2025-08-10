@@ -1,7 +1,5 @@
 // src/lib/auth.ts
-import { credentialsProvider } from "@/app/api/auth/providers/credentials";
-import azureAdProvider from "@/app/api/auth/providers/azure-ad";
-import googleProvider from "@/app/api/auth/providers/google";
+import getProviders from "@/app/api/auth/providers";
 import { prisma } from "@/lib/prisma";
 import { PrismaAdapter } from "@next-auth/prisma-adapter";
 import type { NextAuthOptions, User } from "next-auth";
@@ -25,7 +23,7 @@ function hasId(u: unknown): u is { id: string } {
 
 export const authOptions: NextAuthOptions = {
     adapter: PrismaAdapter(prisma),
-    providers: [credentialsProvider, azureAdProvider(), googleProvider()],
+    providers: getProviders(),
     session: { strategy: "jwt" },
     secret: process.env.NEXTAUTH_SECRET,
     pages: { signIn: "/login" },
