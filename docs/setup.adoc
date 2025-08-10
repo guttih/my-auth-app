@@ -116,7 +116,28 @@ and create a **.env.local** file with someting like this:
 ----
 NEXTAUTH_URL=http://localhost:3000
 NEXTAUTH_SECRET=kmLumZtBmGIMkJhANnbjeAI4vPrWs78peWawyQip7U4=
+DISABLE_PASSWORD_WHEN_LINKED_ACCOUNT=false
+AUTH_CREDENTIALS_ENABLED=false
 ---
+
+If you want to allow microsoft and/or google login, add these to your .env.local:
+
+For Microsoft (Azure AD / Entra):
+[source,env]
+----
+AZURE_AD_CLIENT_ID=xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx
+AZURE_AD_CLIENT_SECRET=xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
+AZURE_AD_TENANT_ID=xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx
+----
+
+For Google:
+[source,env]
+----
+GOOGLE_CLIENT_ID=xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx.apps.googleusercontent.com
+GOOGLE_CLIENT_SECRET=xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
+----
+
+for production create a **.env.production** file with the same content as .env.local, but with `ALLOW_PASSWORD_WHEN_OAUTH=false` to disable password login when OAuth is enabled.
 
 === ✅ 4. Run the App
 

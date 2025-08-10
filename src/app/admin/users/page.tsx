@@ -7,7 +7,7 @@ import { UserFormData } from "@/types/user";
 import { confirmDialog } from "@/components/ui/ConfirmDialog/ConfirmDialog";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/Button/Button";
-import { showMessageBox } from "@/components/ui/MessageBox/MessageBox";
+import ConnectedAccountsPanel from "@/components/User/ConnectedAccountsPanel";
 
 export default function AdminUsersPage() {
     const [users, setUsers] = useState<UserFormData[]>([]);
@@ -91,7 +91,7 @@ export default function AdminUsersPage() {
 
                 <Button onClick={() => router.push("/dashboard")}>Dashboard</Button>
 
-                <Button onClick={() => setSelectedUser({ username: "", email: "", role: "VIEWER", authProvider: "LOCAL" })} variant="important">
+                <Button onClick={() => setSelectedUser({ username: "", email: "", role: "VIEWER" })} variant="important">
                     + New User
                 </Button>
             </div>
@@ -102,7 +102,7 @@ export default function AdminUsersPage() {
             >
                 <thead style={{ backgroundColor: "var(--card-bg)" }}>
                     <tr>
-                        {["Username", "Email", "Role", "Auth", "Created", "Actions"].map((header) => (
+                        {["Username", "Email", "Role", "Auth", "Created"].map((header) => (
                             <th key={header} className="border px-4 py-2" style={{ borderColor: "var(--border)" }}>
                                 {header}
                             </th>
@@ -132,9 +132,6 @@ export default function AdminUsersPage() {
                                 {user.role}
                             </td>
                             <td className="border px-4 py-2" style={{ borderColor: "var(--border)" }}>
-                                {user.authProvider}
-                            </td>
-                            <td className="border px-4 py-2" style={{ borderColor: "var(--border)" }}>
                                 {user.createdAt ? new Date(user.createdAt).toLocaleDateString() : "-"}
                             </td>
                             <td className="border px-4 py-2 text-center" style={{ borderColor: "var(--border)" }}>
@@ -161,6 +158,7 @@ export default function AdminUsersPage() {
                             ×
                         </button>
                         <UserForm initialData={selectedUser} isAdmin={true} onSubmit={handleFormSubmit} />
+                        {selectedUser.id && <ConnectedAccountsPanel userId={selectedUser.id} showConnectButtons={false} allowUnlink={true} />}
                     </div>
                 </div>
             )}

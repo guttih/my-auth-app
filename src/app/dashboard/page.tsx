@@ -28,22 +28,24 @@ export default async function DashboardPage() {
     return (
         <div className="p-6 space-y-4">
             <h1 className="text-2xl font-bold">Welcome to your dashboard 👋</h1>
-            <p className="text-gray-600">
+            <p>
                 User {session.user.name} logged in as {userRoleDescription(session.user.role)}.
             </p>
-            <Link href="/profile" className="text-blue-600 hover:underline">
+            <Link href="/profile" className="hover:underline">
                 Profile
             </Link>
-            <LogoutButton />
             {/* let's create a link to the admin/users page if user is admin */}
             {session.user.role === "ADMIN" && (
                 <div className="mt-4">
                     <h3 className="text-lg font-semibold mt-4">Admin Panel</h3>
-                    <p className="text-blue-600">
-                        <Link href="/admin/users">User Management</Link>
+                    <p className="">
+                        <Link href="/admin/users" className="hover:underline">
+                            User Management
+                        </Link>
                     </p>
                 </div>
             )}
+            <LogoutButton />
         </div>
     );
 }

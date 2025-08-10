@@ -1,13 +1,8 @@
-// credentials.ts
+// src/app/api/auth/providers/credentials.ts
 import CredentialsProvider from "next-auth/providers/credentials";
 import bcrypt from "bcrypt";
-import { prisma } from "@/lib/prisma"; // we'll extract Prisma next
-import type { User } from "next-auth";
-
-async function validateWithAD(username: string, password: string): Promise<boolean> {
-    // Real implementation later
-    return false;
-}
+import { prisma } from "@/lib/prisma";
+import { visibleProvidersForUser } from "@/lib/auth/decide";
 
 export const credentialsProvider = CredentialsProvider({
     name: "Credentials",
@@ -16,31 +11,37 @@ export const credentialsProvider = CredentialsProvider({
         password: { label: "Password", type: "password" },
     },
     async authorize(credentials) {
-        if (!credentials) return null;
+        const username = (credentials?.username ?? "").trim();
+        const password = credentials?.password ?? "";
+        if (!username || !password) return null;
 
         const user = await prisma.user.findUnique({
-            where: { username: credentials.username },
+            where: { username },
+            select: { id: true, username: true, email: true, role: true, theme: true, profileImage: true, passwordHash: true },
         });
+        if (!user) throw new Error("USER_NOT_FOUND");
 
-        if (!user) throw new Error("User not found");
-
-        if (user.authProvider === "AD") {
-            const valid = await validateWithAD(user.username, credentials.password);
-            if (!valid) throw new Error("Invalid AD credentials");
-        } else {
-            if (!user.passwordHash) throw new Error("Local user has no password");
-            const valid = await bcrypt.compare(credentials.password, user.passwordHash);
-            if (!valid) throw new Error("Invalid password");
+        const vis = await visibleProvidersForUser(user.id);
+        if (!vis.credentials) {
+            if (vis.microsoft && vis.google) throw new Error("OAUTH_ONLY"); // both allowed
+            if (vis.microsoft) throw new Error("OAUTH_ONLY_MICROSOFT");
+            if (vis.google) throw new Error("OAUTH_ONLY_GOOGLE");
+            throw new Error("OAUTH_ONLY"); // fallback
         }
+
+        if (!user.passwordHash) throw new Error("NO_LOCAL_PASSWORD");
+
+        const valid = await bcrypt.compare(password, user.passwordHash);
+        if (!valid) throw new Error("INVALID_PASSWORD");
 
         return {
             id: user.id,
-            name: user.username, // Still needed for NextAuth internal compatibility
+            name: user.username ?? undefined,
             email: user.email ?? undefined,
-            username: user.username,
+            username: user.username ?? null,
             role: user.role,
             theme: user.theme,
             profileImage: user.profileImage,
-        } as User;
+        };
     },
 });

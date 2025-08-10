@@ -1,6 +1,6 @@
 // src/types/user.ts
 
-import type { Role, Theme, AuthProvider } from "@prisma/client";
+import type { Role, Theme } from "@prisma/client";
 
 export interface UserFormData {
     id?: string;
@@ -8,7 +8,6 @@ export interface UserFormData {
     email?: string;
     password?: string;
     role?: Role;
-    authProvider?: AuthProvider;
     theme?: Theme;
     profileImage?: string;
     createdAt?: string;

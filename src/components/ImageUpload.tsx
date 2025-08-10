@@ -1,6 +1,7 @@
 // src/components/ImageUpload.tsx
-import { useEffect, useRef, useState } from "react";
 
+import { useEffect, useRef, useState } from "react";
+import Image from "next/image";
 interface ImageUploadProps {
     value?: string; // Existing image path or URL
     onChange: (file: File | null) => void;
@@ -40,7 +41,7 @@ export default function ImageUpload({ value, onChange }: ImageUploadProps) {
                 className="relative w-32 h-32 rounded-full overflow-hidden cursor-pointer border-2 border-gray-300 shadow hover:shadow-md transition"
                 title="Click to change profile image"
             >
-                <img src={imageSrc} alt="Profile preview" className="w-full h-full object-cover" />
+                <Image src={imageSrc} alt="Profile preview" fill sizes="(max-width: 128px) 100vw, 128px" className="object-cover" />
                 <input type="file" accept="image/*" ref={inputRef} onChange={handleFileChange} className="hidden" />
             </div>
         </div>
