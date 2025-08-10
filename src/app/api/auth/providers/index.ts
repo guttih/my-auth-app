@@ -10,14 +10,11 @@ function envBool(name: string, def = true) {
     return !["false", "0", "no", "off"].includes(v);
 }
 
-const credentialsEnabled = envBool("AUTH_CREDENTIALS_ENABLED", true);
-
 export function getProviders(): Provider[] {
     const providers: Provider[] = [];
 
-    if (credentialsEnabled) {
-        providers.push(credentialsProvider);
-    }
+    const credentialsEnabled = envBool("AUTH_CREDENTIALS_ENABLED", true);
+    if (credentialsEnabled) providers.push(credentialsProvider);
 
     if (process.env.AZURE_AD_CLIENT_ID && process.env.AZURE_AD_CLIENT_SECRET) {
         providers.push(azureAdProvider());

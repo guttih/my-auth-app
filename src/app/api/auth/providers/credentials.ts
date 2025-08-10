@@ -2,14 +2,9 @@
 import CredentialsProvider from "next-auth/providers/credentials";
 import bcrypt from "bcrypt";
 import { prisma } from "@/lib/prisma";
-import { AuthProvider } from "@prisma/client";
+import { visibleProvidersForUser } from "@/lib/auth/decide";
 
 type Creds = { username?: string; password?: string };
-
-// NOTE (new semantics):
-// false (default)  => always allow password
-// true             => DISABLE password if user has linked OAuth (AD/GOOGLE)
-const DISABLE_PASSWORD_WHEN_LINKED_ACCOUNT = (process.env.DISABLE_PASSWORD_WHEN_LINKED_ACCOUNT ?? "").trim().toLowerCase() === "false";
 
 export const credentialsProvider = CredentialsProvider({
     name: "Credentials",
@@ -18,36 +13,22 @@ export const credentialsProvider = CredentialsProvider({
         password: { label: "Password", type: "password" },
     },
     async authorize(credentials) {
-        const { username, password } = (credentials ?? {}) as Creds;
+        const username = (credentials?.username ?? "").trim();
+        const password = credentials?.password ?? "";
         if (!username || !password) return null;
 
         const user = await prisma.user.findUnique({
             where: { username },
-            select: {
-                id: true,
-                username: true,
-                email: true,
-                role: true,
-                theme: true,
-                profileImage: true,
-                authProvider: true,
-                passwordHash: true,
-            },
+            select: { id: true, username: true, email: true, role: true, theme: true, profileImage: true, passwordHash: true },
         });
-
         if (!user) throw new Error("USER_NOT_FOUND");
 
-        // Treat any non-LOCAL as OAuth-backed. If your enum includes GOOGLE, this will match explicitly;
-        // if not, keep using AD or extend the enum when you add Google.
-        const isOAuthBacked = user.authProvider !== (AuthProvider as any).LOCAL;
-
-        // With your requested semantics:
-        // - when DISABLE_PASSWORD_WHEN_LINKED_ACCOUNT === true, block passwords if the user is OAuth-backed
-        // - when false, always allow password (even if linked)
-        if (DISABLE_PASSWORD_WHEN_LINKED_ACCOUNT && isOAuthBacked) {
-            const code = user.authProvider === (AuthProvider as any).AD ? "OAUTH_ONLY_MICROSOFT" : "OAUTH_ONLY_GOOGLE";
-            // Important: return null gives generic CredentialsSignin; throwing preserves .error for signIn({ redirect:false })
-            throw new Error(code);
+        const vis = await visibleProvidersForUser(user.id);
+        if (!vis.credentials) {
+            if (vis.microsoft && vis.google) throw new Error("OAUTH_ONLY"); // both allowed
+            if (vis.microsoft) throw new Error("OAUTH_ONLY_MICROSOFT");
+            if (vis.google) throw new Error("OAUTH_ONLY_GOOGLE");
+            throw new Error("OAUTH_ONLY"); // fallback
         }
 
         if (!user.passwordHash) throw new Error("NO_LOCAL_PASSWORD");

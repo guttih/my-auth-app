@@ -117,6 +117,7 @@ and create a **.env.local** file with someting like this:
 NEXTAUTH_URL=http://localhost:3000
 NEXTAUTH_SECRET=kmLumZtBmGIMkJhANnbjeAI4vPrWs78peWawyQip7U4=
 DISABLE_PASSWORD_WHEN_LINKED_ACCOUNT=false
+AUTH_CREDENTIALS_ENABLED=false
 ---
 
 If you want to allow microsoft and/or google login, add these to your .env.local:

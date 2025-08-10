@@ -41,7 +41,7 @@ export default function LoginPage() {
     const [credError, setCredError] = useState("");
 
     const [providers, setProviders] = useState<ProvidersMap | null>(null);
-    const [oauthLock, setOauthLock] = useState<"microsoft" | "google" | null>(null);
+    const [oauthLock, setOauthLock] = useState<"microsoft" | "google" | "both" | null>(null);
     // when set, we hide credentials and the other oauth option
 
     const router = useRouter();
@@ -58,6 +58,7 @@ export default function LoginPage() {
         };
     }, []);
 
+    // derive what to show
     const hasAzure = !!providers?.["azure-ad"];
     const hasGoogle = !!providers?.["google"];
     const hasCredentials = !!providers?.["credentials"];
@@ -73,39 +74,42 @@ export default function LoginPage() {
         setSubmitting(true);
         setCredError("");
 
-        // 1) Preflight
-        const pre = await fetch("/api/auth/preflight", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ username }),
-        }).then((r) => r.json() as Promise<{ code: string | null }>);
+        const uname = username.trim();
 
-        if (pre.code === "OAUTH_ONLY_MICROSOFT") {
-            setOauthLock("microsoft");
+        try {
+            const res = await fetch("/api/auth/preflight", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ username: uname }),
+            });
+            const pre: { code: "OAUTH_ONLY" | "OAUTH_ONLY_MICROSOFT" | "OAUTH_ONLY_GOOGLE" | null; providers?: ("microsoft" | "google")[] } =
+                await res.json();
+
+            if (pre.code) {
+                setSubmitting(false);
+
+                if (pre.code === "OAUTH_ONLY_MICROSOFT") {
+                    setOauthLock("microsoft");
+                    setCredError("This account uses OAuth. Please continue with Microsoft.");
+                } else if (pre.code === "OAUTH_ONLY_GOOGLE") {
+                    setOauthLock("google");
+                    setCredError("This account uses OAuth. Please continue with Google.");
+                } else {
+                    // OAUTH_ONLY with providers array (both)
+                    setOauthLock("both");
+                    setCredError("This account uses OAuth. Please continue with Microsoft or Google.");
+                }
+                return;
+            }
+
+            const result = await signIn("credentials", { username: uname, password, redirect: false });
             setSubmitting(false);
-            setCredError("Your account is linked to Microsoft. Please use “Continue with Microsoft”.");
-            return;
-        }
-        if (pre.code === "OAUTH_ONLY_GOOGLE") {
-            setOauthLock("google");
+
+            if (result?.ok) router.push("/dashboard");
+            else setCredError("Invalid username or password");
+        } catch {
             setSubmitting(false);
-            setCredError("Your account is linked to Google. Please use “Continue with Google”.");
-            return;
-        }
-
-        // 2) Proceed with credentials sign-in
-        const res = await signIn("credentials", {
-            username,
-            password,
-            redirect: false,
-        });
-
-        setSubmitting(false);
-
-        if (res?.ok) {
-            router.push("/dashboard");
-        } else {
-            setCredError("Invalid username or password");
+            setCredError("Network error. Please try again.");
         }
     };
 
@@ -113,8 +117,8 @@ export default function LoginPage() {
     const startGoogle = () => signIn("google", { callbackUrl: "/dashboard" });
 
     // After preflight lock, show only the required provider
-    const showAzure = hasAzure && (oauthLock ? oauthLock === "microsoft" : true);
-    const showGoogle = hasGoogle && (oauthLock ? oauthLock === "google" : true);
+    const showAzure = hasAzure && (oauthLock === null || oauthLock === "microsoft" || oauthLock === "both");
+    const showGoogle = hasGoogle && (oauthLock === null || oauthLock === "google" || oauthLock === "both");
     const showCredentials = hasCredentials && oauthLock === null;
 
     return (
@@ -130,31 +134,6 @@ export default function LoginPage() {
                         {oauthError || credError}
                     </div>
                 )}
-
-                {(showAzure || showGoogle) && (
-                    <div className="space-y-3">
-                        {showAzure && (
-                            <Button type="button" onClick={startAzure} className="w-full py-2 px-4" variant="secondary">
-                                Continue with Microsoft
-                            </Button>
-                        )}
-                        {showGoogle && (
-                            <Button type="button" onClick={startGoogle} className="w-full py-2 px-4" variant="secondary">
-                                Continue with Google
-                            </Button>
-                        )}
-                    </div>
-                )}
-
-                {/* Divider only when both OAuth (visible) and credentials are visible */}
-                {showCredentials && (showAzure || showGoogle) && (
-                    <div className="flex items-center gap-3">
-                        <div className="h-px flex-1" style={{ backgroundColor: "var(--border)" }} />
-                        <span className="text-xs opacity-70">or</span>
-                        <div className="h-px flex-1" style={{ backgroundColor: "var(--border)" }} />
-                    </div>
-                )}
-
                 {showCredentials && (
                     <form onSubmit={onSubmit} className="space-y-4">
                         <div>
@@ -191,6 +170,28 @@ export default function LoginPage() {
                             {submitting ? "Signing in…" : "Sign In"}
                         </Button>
                     </form>
+                )}
+                {/* Divider only when both OAuth (visible) and credentials are visible */}
+                {showCredentials && (showAzure || showGoogle) && (
+                    <div className="flex items-center gap-3">
+                        <div className="h-px flex-1" style={{ backgroundColor: "var(--border)" }} />
+                        <span className="text-xs opacity-70">or</span>
+                        <div className="h-px flex-1" style={{ backgroundColor: "var(--border)" }} />
+                    </div>
+                )}
+                {(showAzure || showGoogle) && (
+                    <div className="space-y-3">
+                        {showAzure && (
+                            <Button type="button" onClick={startAzure} className="w-full py-2 px-4" variant="secondary">
+                                Continue with Microsoft
+                            </Button>
+                        )}
+                        {showGoogle && (
+                            <Button type="button" onClick={startGoogle} className="w-full py-2 px-4" variant="secondary">
+                                Continue with Google
+                            </Button>
+                        )}
+                    </div>
                 )}
 
                 {providers && !hasAzure && !hasGoogle && !hasCredentials && (
