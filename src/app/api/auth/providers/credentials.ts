@@ -6,8 +6,10 @@ import { AuthProvider } from "@prisma/client";
 
 type Creds = { username?: string; password?: string };
 
-// optional: allow password for users who also have OAuth during migration
-const ALLOW_PASSWORD_WHEN_OAUTH = (process.env.ALLOW_PASSWORD_WHEN_OAUTH ?? "").toLowerCase() === "true";
+// NOTE (new semantics):
+// false (default)  => always allow password
+// true             => DISABLE password if user has linked OAuth (AD/GOOGLE)
+const DISABLE_PASSWORD_WHEN_LINKED_ACCOUNT = (process.env.DISABLE_PASSWORD_WHEN_LINKED_ACCOUNT ?? "").trim().toLowerCase() === "false";
 
 export const credentialsProvider = CredentialsProvider({
     name: "Credentials",
@@ -35,14 +37,19 @@ export const credentialsProvider = CredentialsProvider({
 
         if (!user) throw new Error("USER_NOT_FOUND");
 
-        // Enforce provider-only login for OAuth users by default
-        if ((user.authProvider === AuthProvider.AD || user.authProvider === AuthProvider.GOOGLE) && !ALLOW_PASSWORD_WHEN_OAUTH) {
-            // Use distinct codes so /login can show the right CTA
-            const code = user.authProvider === AuthProvider.AD ? "OAUTH_ONLY_MICROSOFT" : "OAUTH_ONLY_GOOGLE";
+        // Treat any non-LOCAL as OAuth-backed. If your enum includes GOOGLE, this will match explicitly;
+        // if not, keep using AD or extend the enum when you add Google.
+        const isOAuthBacked = user.authProvider !== (AuthProvider as any).LOCAL;
+
+        // With your requested semantics:
+        // - when DISABLE_PASSWORD_WHEN_LINKED_ACCOUNT === true, block passwords if the user is OAuth-backed
+        // - when false, always allow password (even if linked)
+        if (DISABLE_PASSWORD_WHEN_LINKED_ACCOUNT && isOAuthBacked) {
+            const code = user.authProvider === (AuthProvider as any).AD ? "OAUTH_ONLY_MICROSOFT" : "OAUTH_ONLY_GOOGLE";
+            // Important: return null gives generic CredentialsSignin; throwing preserves .error for signIn({ redirect:false })
             throw new Error(code);
         }
 
-        // Local (or migration mode): verify password
         if (!user.passwordHash) throw new Error("NO_LOCAL_PASSWORD");
 
         const valid = await bcrypt.compare(password, user.passwordHash);

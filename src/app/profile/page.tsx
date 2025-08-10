@@ -6,7 +6,6 @@ import SelfEditForm from "@/components/User/SelfEditForm";
 import ConnectMicrosoftButton from "./ConnectMicrosoftButton";
 import ConnectGoogleButton from "./ConnectGoogleButton";
 import ConnectedAccountsPanel from "./ConnectedAccountsPanel";
-import { Button } from "@/components/ui/Button/Button";
 import Link from "next/link";
 
 export default async function ProfilePage() {

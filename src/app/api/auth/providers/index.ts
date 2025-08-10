@@ -4,12 +4,18 @@ import azureAdProvider from "./azure-ad";
 import googleProvider from "./google";
 import type { Provider } from "next-auth/providers";
 
-const normalUserPassProviderEnabled: boolean = true; // toggle this to disable local user/password auth
+function envBool(name: string, def = true) {
+    const v = (process.env[name] ?? "").trim().toLowerCase();
+    if (!v) return def;
+    return !["false", "0", "no", "off"].includes(v);
+}
+
+const credentialsEnabled = envBool("AUTH_CREDENTIALS_ENABLED", true);
 
 export function getProviders(): Provider[] {
     const providers: Provider[] = [];
 
-    if (normalUserPassProviderEnabled) {
+    if (credentialsEnabled) {
         providers.push(credentialsProvider);
     }
 
