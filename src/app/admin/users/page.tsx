@@ -8,12 +8,16 @@ import { confirmDialog } from "@/components/ui/ConfirmDialog/ConfirmDialog";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/Button/Button";
 import ConnectedAccountsPanel from "@/components/User/ConnectedAccountsPanel";
+import { useSession, signOut } from "next-auth/react";
+import { showMessageBox } from "@/components/ui/MessageBox/MessageBox";
+import { Role } from "@prisma/client";
 
 export default function AdminUsersPage() {
     const [users, setUsers] = useState<UserFormData[]>([]);
     const [selectedUser, setSelectedUser] = useState<UserFormData | null>(null);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
+    const { data: session } = useSession();
     const router = useRouter();
     useEffect(() => {
         const fetchUsers = async () => {
@@ -36,6 +40,25 @@ export default function AdminUsersPage() {
     const handleFormSubmit = async (userData: UserFormData) => {
         const method = userData.id ? "PATCH" : "POST";
         const url = userData.id ? `/api/admin/users/${userData.id}` : "/api/admin/users";
+        let oldRole = userData.role;
+        if (userData.id) {
+            const res = await fetch(url);
+            const { role } = await res.json();
+            oldRole = role;
+            if (role === Role.ADMIN) {
+                const stats = await fetch("/api/admin/stats");
+                const { adminCount } = await stats.json();
+                if (adminCount <= 1) {
+                    showMessageBox({
+                        variant: "error",
+                        title: "Admin Demotion",
+                        message: "The system needs at least one admin user. You cannot demote the last admin.",
+                        buttonText: "Close and cancel",
+                    });
+                    return;
+                }
+            }
+        }
 
         const res = await fetch(url, {
             method,
@@ -44,6 +67,11 @@ export default function AdminUsersPage() {
         });
 
         if (res.ok) {
+            if (session?.user?.id === userData.id && oldRole !== userData.role) {
+                // If the logged-in user changed their own role, we need to sign them out
+                await signOut({ redirect: true, callbackUrl: "/login" });
+                return;
+            }
             const updatedUser = await res.json();
             if (userData.id) {
                 // update existing
@@ -59,11 +87,28 @@ export default function AdminUsersPage() {
     };
 
     const handleDeleteUser = async (id: string) => {
-        // if (!confirm("Are you sure you want to delete this user?")) return;
+        const harakiri = session?.user?.id === id;
 
+        if (harakiri) {
+            const stats = await fetch("/api/admin/stats");
+            const { adminCount } = await stats.json();
+
+            if (adminCount <= 1) {
+                showMessageBox({
+                    variant: "error",
+                    title: "Admin Deletion",
+                    message: "The system needs at least one admin user. You cannot delete your own account.",
+                    buttonText: "Close and cancel",
+                });
+                return;
+            }
+        }
+
+        const title = harakiri ? "Delete your own account" : "Delete user?";
+        const message = harakiri ? "You are about to delete your own account, are you sure?" : "Are you sure you want to delete this user?";
         const ok = await confirmDialog({
-            title: "Delete user?",
-            message: "Are you sure you want to delete this user? This cannot be undone.",
+            title,
+            message,
             confirmText: "Yes, delete",
             cancelText: "Cancel",
         });
@@ -75,6 +120,10 @@ export default function AdminUsersPage() {
         });
 
         if (res.ok) {
+            if (harakiri) {
+                // There are no users in db, so current user does not exist so we should destroy the session and redirect to /
+                return await signOut({ redirect: true, callbackUrl: "/login" });
+            }
             setUsers((prev) => prev.filter((u) => u.id !== id));
         } else {
             alert("Failed to delete user.");

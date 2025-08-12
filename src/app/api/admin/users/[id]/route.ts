@@ -9,6 +9,39 @@ import bcrypt from "bcrypt";
 import { UserFormData } from "@/types/user";
 import type { Prisma } from "@prisma/client";
 
+// Get spesific user
+export async function GET(_: NextRequest, context: { params: { id: string } }) {
+    const session = await getServerSession(authOptions);
+    if (!session?.user || !hasAdminAccess(session.user)) {
+        return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
+    const { id } = context.params;
+
+    try {
+        const user = await prisma.user.findUnique({
+            where: { id },
+            select: {
+                id: true,
+                username: true,
+                email: true,
+                role: true,
+                createdAt: true,
+                updatedAt: true,
+                theme: true,
+                profileImage: true,
+            },
+        });
+        if (!user) {
+            return NextResponse.json({ error: "User not found" }, { status: 404 });
+        }
+        return NextResponse.json(user);
+    } catch (err) {
+        console.error("GET /api/admin/users/:id error:", err);
+        return NextResponse.json({ error: "Failed to fetch user" }, { status: 500 });
+    }
+}
+
 // Update an existing user
 export async function PATCH(req: Request, context: { params: { id: string } }) {
     const session = await getServerSession(authOptions);

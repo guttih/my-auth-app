@@ -50,6 +50,23 @@ export default function LoginPage() {
     useEffect(() => {
         let mounted = true;
         (async () => {
+            try {
+                const res = await fetch("/api/system/install-state", { cache: "no-store" });
+                if (!res.ok) return;
+                const data = await res.json();
+                if (mounted && data?.needsFirstUser) router.replace("/first-user");
+            } catch {
+                /* ignore */
+            }
+        })();
+        return () => {
+            mounted = false;
+        };
+    }, [router]);
+
+    useEffect(() => {
+        let mounted = true;
+        (async () => {
             const p = (await getNextAuthProviders()) as ProvidersMap | null;
             if (mounted) setProviders(p);
         })();
