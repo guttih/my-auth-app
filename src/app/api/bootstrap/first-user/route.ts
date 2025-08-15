@@ -2,6 +2,7 @@
 
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
+import { Theme } from "@prisma/client";
 import bcrypt from "bcrypt";
 
 export async function POST(req: NextRequest) {
@@ -12,7 +13,9 @@ export async function POST(req: NextRequest) {
     }
 
     const body = await req.json().catch(() => ({}));
-    const { username, email, password } = body as { username?: string; email?: string; password?: string };
+    const { username, email, password, theme } = body as { username?: string; email?: string; password?: string; theme?: string };
+    // Validate and cast theme to Theme enum
+    const validTheme = theme && Object.values(Theme).includes(theme as Theme) ? (theme as Theme) : Theme.light;
 
     if (!username || !password) {
         return new NextResponse("Missing username or password", { status: 400 });
@@ -30,11 +33,10 @@ export async function POST(req: NextRequest) {
     const newUser = await prisma.user.create({
         data: {
             username,
-            email: email || null,
+            theme: validTheme,
             passwordHash,
-            role: "ADMIN", // <-- force ADMIN on first user
-            theme: "light",
             profileImage: "",
+            role: "ADMIN", // <-- force ADMIN on first user
         },
         select: {
             id: true,

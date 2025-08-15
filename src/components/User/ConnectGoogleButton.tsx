@@ -1,4 +1,4 @@
-// src/app/profile/ConnectGoogleButton.tsx
+// src/components/User/ConnectGoogleButton.tsx
 "use client";
 import { Button } from "@/components/ui/Button/Button";
 import { signIn } from "next-auth/react";

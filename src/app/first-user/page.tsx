@@ -6,6 +6,7 @@ import UserForm from "@/components/User/UserForm";
 import type { UserFormData } from "@/types/user";
 import { useRouter } from "next/navigation";
 import { signIn } from "next-auth/react";
+import { showMessageBox } from "@/components/ui/MessageBox/MessageBox";
 
 export default function FirstUserPage() {
     const router = useRouter();
@@ -37,12 +38,19 @@ export default function FirstUserPage() {
                 username: data.username,
                 email: data.email,
                 password: data.password,
+                theme: data.theme,
+                role: "ADMIN",
             }),
         });
 
         if (!res.ok) {
             const msg = await res.text();
-            alert(msg || "Failed to create first user");
+            showMessageBox({
+                variant: "error",
+                title: "Problem",
+                message: msg || "Failed to create first user",
+                buttonText: "Close",
+            });
             return;
         }
 

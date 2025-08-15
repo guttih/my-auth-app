@@ -82,7 +82,12 @@ export default function AdminUsersPage() {
             }
             setSelectedUser(null);
         } else {
-            alert("Failed to save user");
+            showMessageBox({
+                variant: "error",
+                title: "Problem",
+                message: "Failed to save user",
+                buttonText: "Close",
+            });
         }
     };
 
@@ -126,7 +131,12 @@ export default function AdminUsersPage() {
             }
             setUsers((prev) => prev.filter((u) => u.id !== id));
         } else {
-            alert("Failed to delete user.");
+            showMessageBox({
+                variant: "error",
+                title: "Problem",
+                message: "Failed to delete user",
+                buttonText: "Close",
+            });
         }
     };
 

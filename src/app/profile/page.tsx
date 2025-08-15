@@ -8,20 +8,33 @@ import ConnectGoogleButton from "@/components/User/ConnectGoogleButton";
 import ConnectedAccountsPanel from "@/components/User/ConnectedAccountsPanel";
 import Link from "next/link";
 
+// ✅ reuse your env-driven provider list
+import { getProviders as getAuthProviders } from "@/app/api/auth/providers";
+
 export default async function ProfilePage() {
     const session = await getServerSession(authOptions);
     if (!session?.user) redirect("/login");
+
+    const providers = getAuthProviders();
+    // Only consider oauth providers for linking
+    const enabled = new Set(providers.filter((p: any) => p.type === "oauth").map((p: any) => p.id as string));
+
+    const showGoogle = enabled.has("google");
+    const showMicrosoft = enabled.has("azure-ad");
 
     return (
         <div className="max-w-2xl mx-auto p-6 space-y-6">
             <h1 className="text-2xl font-bold">Your Profile</h1>
             <p className="text-gray-600">Update your account details below.</p>
+
             <SelfEditForm />
+
             <div className="flex gap-3">
-                <ConnectMicrosoftButton />
-                <ConnectGoogleButton />
+                {showMicrosoft && <ConnectMicrosoftButton />}
+                {showGoogle && <ConnectGoogleButton />}
                 <ConnectedAccountsPanel />
             </div>
+
             <Link href="/dashboard">Dashboard</Link>
         </div>
     );

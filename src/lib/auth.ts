@@ -21,6 +21,25 @@ function hasTokenTheme(token: unknown): boolean {
     return typeof (token as Record<string, unknown>).theme !== "undefined";
 }
 
+// src/lib/auth.ts
+// 🚨 Early env sanity checks — before exporting authOptions
+if (process.env.NODE_ENV === "production" && !process.env.NEXTAUTH_SECRET) {
+    throw new Error("Missing NEXTAUTH_SECRET — refusing to start in production.");
+}
+if (!process.env.NEXTAUTH_SECRET) {
+    console.error(`
+========================================================
+🚨 NEXTAUTH_SECRET is missing!
+JWT session decryption will break across restarts.
+Generate one with:  openssl rand -base64 32
+Add to .env.local (dev) and your prod environment.
+========================================================
+`);
+}
+if (!process.env.NEXTAUTH_URL) {
+    console.warn("[next-auth] NEXTAUTH_URL is not set. Set it to your site origin.");
+}
+
 export const authOptions: NextAuthOptions = {
     adapter: PrismaAdapter(prisma),
     providers: getProviders(),

@@ -1,7 +1,8 @@
-// src/components/ui/User/ConnectedAccountsPanel.tsx
+// src/components/User/ConnectedAccountsPanel.tsx
 "use client";
 import { useEffect, useState } from "react";
 import { confirmDialog } from "../ui/ConfirmDialog/ConfirmDialog";
+import { showMessageBox } from "@/components/ui/MessageBox/MessageBox";
 
 type LinkedAccount = {
     id: string;
@@ -49,7 +50,12 @@ export default function ConnectedAccountsPanel({ userId, showConnectButtons = tr
         });
         if (!res.ok) {
             const j = await res.json().catch(() => ({}));
-            alert(j?.error ?? "Failed to unlink");
+            showMessageBox({
+                variant: "error",
+                title: "Problem",
+                message: j?.error ?? "Failed to unlink",
+                buttonText: "Close",
+            });
             return;
         }
         load();
