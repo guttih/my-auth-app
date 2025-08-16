@@ -10,13 +10,13 @@ import { UserFormData } from "@/types/user";
 import type { Prisma } from "@prisma/client";
 
 // Get spesific user
-export async function GET(_: NextRequest, context: { params: { id: string } }) {
+export async function GET(_: NextRequest, context: { params: Promise<{ id: string }> }) {
     const session = await getServerSession(authOptions);
     if (!session?.user || !hasAdminAccess(session.user)) {
         return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const { id } = context.params;
+    const { id } = await context.params;
 
     try {
         const user = await prisma.user.findUnique({
@@ -87,13 +87,13 @@ export async function PATCH(req: Request, context: { params: { id: string } }) {
 }
 
 // Delete an existing user user
-export async function DELETE(_: NextRequest, context: { params: { id: string } }) {
+export async function DELETE(_: NextRequest, context: { params: Promise<{ id: string }> }) {
     const session = await getServerSession(authOptions);
     if (!session?.user || !hasAdminAccess(session.user)) {
         return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const { id } = context.params;
+    const { id } = await context.params;
 
     try {
         await prisma.user.delete({ where: { id } });

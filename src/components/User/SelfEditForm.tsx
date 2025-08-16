@@ -4,6 +4,7 @@
 import { useEffect, useState } from "react";
 import UserForm from "@/components/User/UserForm";
 import { UserFormData } from "@/types/user";
+import { setTheme } from "@/lib/theme/client";
 
 export default function SelfEditForm() {
     const [userData, setUserData] = useState<Partial<UserFormData> | null>(null);
@@ -47,8 +48,7 @@ export default function SelfEditForm() {
             }
 
             if (theme) {
-                document.documentElement.setAttribute("data-theme", theme);
-                localStorage.setItem("theme", theme);
+                setTheme(theme);
             }
 
             setMessage("Profile updated successfully ✅");

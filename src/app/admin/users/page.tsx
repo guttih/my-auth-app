@@ -11,6 +11,7 @@ import ConnectedAccountsPanel from "@/components/User/ConnectedAccountsPanel";
 import { useSession, signOut } from "next-auth/react";
 import { showMessageBox } from "@/components/ui/MessageBox/MessageBox";
 import { Role } from "@prisma/client";
+import { setTheme } from "@/lib/theme/client";
 
 export default function AdminUsersPage() {
     const [users, setUsers] = useState<UserFormData[]>([]);
@@ -45,7 +46,7 @@ export default function AdminUsersPage() {
             const res = await fetch(url);
             const { role } = await res.json();
             oldRole = role;
-            if (role === Role.ADMIN) {
+            if (role === Role.ADMIN && userData.role !== Role.ADMIN) {
                 const stats = await fetch("/api/admin/stats");
                 const { adminCount } = await stats.json();
                 if (adminCount <= 1) {
@@ -67,10 +68,15 @@ export default function AdminUsersPage() {
         });
 
         if (res.ok) {
-            if (session?.user?.id === userData.id && oldRole !== userData.role) {
+            if (session?.user?.id === userData.id) {
                 // If the logged-in user changed their own role, we need to sign them out
-                await signOut({ redirect: true, callbackUrl: "/login" });
-                return;
+                setTheme(userData.theme);
+
+                if (oldRole !== userData.role) {
+                    // If the logged-in user changed their own role, we need to sign them out
+                    await signOut({ redirect: true, callbackUrl: "/login" });
+                    return;
+                }
             }
             const updatedUser = await res.json();
             if (userData.id) {

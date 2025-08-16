@@ -5,13 +5,14 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { hasAdminAccess } from "@/utils/auth/accessControl";
 
-export async function DELETE(_req: Request, { params }: { params: { id: string; accountId: string } }) {
+export async function DELETE(_req: Request, context: { params: Promise<{ id: string; accountId: string }> }) {
     const session = await getServerSession(authOptions);
     if (!session?.user || !hasAdminAccess(session.user)) return NextResponse.json({ error: "Forbidden" }, { status: 403 });
 
-    const acc = await prisma.account.findUnique({ where: { id: params.accountId } });
-    if (!acc || acc.userId !== params.id) return NextResponse.json({ error: "Not found" }, { status: 404 });
+    const { id, accountId } = await context.params;
+    const acc = await prisma.account.findUnique({ where: { id: accountId } });
+    if (!acc || acc.userId !== id) return NextResponse.json({ error: "Not found" }, { status: 404 });
 
-    await prisma.account.delete({ where: { id: params.accountId } });
+    await prisma.account.delete({ where: { id: accountId } });
     return NextResponse.json({ ok: true });
 }
