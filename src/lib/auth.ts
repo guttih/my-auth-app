@@ -4,6 +4,8 @@ import { prisma } from "@/lib/prisma";
 import { PrismaAdapter } from "@next-auth/prisma-adapter";
 import type { NextAuthOptions, User } from "next-auth";
 import type { Role, Theme } from "@prisma/client";
+import { NextRequest } from "next/server";
+import { fetchSteamPersona } from "./steam";
 
 // Type guard for user with id
 function hasId(u: unknown): u is { id: string } {
@@ -40,9 +42,8 @@ if (!process.env.NEXTAUTH_URL) {
     console.warn("[next-auth] NEXTAUTH_URL is not set. Set it to your site origin.");
 }
 
-export const authOptions: NextAuthOptions = {
+export const authOptionsBase: Omit<NextAuthOptions, "providers"> = {
     adapter: PrismaAdapter(prisma),
-    providers: getProviders(),
     session: { strategy: "jwt" },
     secret: process.env.NEXTAUTH_SECRET,
     pages: { signIn: "/login" },
@@ -117,6 +118,34 @@ export const authOptions: NextAuthOptions = {
         async signIn({ user, account }) {
             console.log(`User ${user.id} signed in with provider ${account?.provider}`);
         },
-        async linkAccount() {},
+        // async linkAccount() {},
+        async linkAccount({ user, account }) {
+            if (account?.provider === "steam" && account.providerAccountId) {
+                try {
+                    const p = await fetchSteamPersona(account.providerAccountId);
+                    if (p) {
+                        const accountId = account.id as string;
+                        // const label
+                        await prisma.account.update({
+                            where: { id: accountId },
+                            data: { label: p.personaname ?? null, image: p.avatarfull ?? p.avatar ?? null },
+                        });
+                    }
+                } catch (e) {
+                    console.warn("steam enrichment failed", e);
+                }
+            }
+        },
     },
 };
+
+// ✅ Factory that returns FULL options (with providers). Pass req when you have it.
+export function getAuthOptions(req?: NextRequest): NextAuthOptions {
+    return {
+        ...authOptionsBase,
+        providers: getProviders(req),
+    };
+}
+
+// (no req -> Steam falls back to NEXTAUTH_URL; that’s fine for reading sessions)
+export const authOptions: NextAuthOptions = getAuthOptions();

@@ -2,12 +2,13 @@
 "use client";
 import { Button } from "@/components/ui/Button/Button";
 import { signIn } from "next-auth/react";
+import { ProviderId } from "@/lib/auth/provider-ids";
 
 export default function ConnectGoogleButton() {
     return (
         <Button
             onClick={() =>
-                signIn("google", {
+                signIn(ProviderId.Google, {
                     callbackUrl: "/profile?linked=google",
                     prompt: "select_account", // show account chooser while testing
                 })

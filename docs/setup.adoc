@@ -137,6 +137,16 @@ GOOGLE_CLIENT_ID=xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx.apps.googleusercontent.c
 GOOGLE_CLIENT_SECRET=xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
 ----
 
+For Steam:
+you need to get a Steam Web API Key from https://steamcommunity.com/dev/apikey
+
+[source,env]
+----
+#Could generate with cmd: openssl rand -base64 32
+STEAM_API_KEY=XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
+STEAM_SECRET=xXxXxXxXxXxXxXxXxXxXxXxXxXxXxXxXxXxXxXxXxXxX
+----
+
 for production create a **.env.production** file with the same content as .env.local, but with `ALLOW_PASSWORD_WHEN_OAUTH=false` to disable password login when OAuth is enabled.
 
 === ✅ 4. Run the App

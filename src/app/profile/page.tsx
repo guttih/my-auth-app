@@ -5,6 +5,7 @@ import { redirect } from "next/navigation";
 import SelfEditForm from "@/components/User/SelfEditForm";
 import ConnectMicrosoftButton from "@/components/User/ConnectMicrosoftButton";
 import ConnectGoogleButton from "@/components/User/ConnectGoogleButton";
+import ConnectSteamButton from "@/components/User/ConnectSteamButton";
 import ConnectedAccountsPanel from "@/components/User/ConnectedAccountsPanel";
 import Link from "next/link";
 
@@ -21,6 +22,7 @@ export default async function ProfilePage() {
 
     const showGoogle = enabled.has("google");
     const showMicrosoft = enabled.has("azure-ad");
+    const showSteam = enabled.has("steam");
 
     return (
         <div className="max-w-2xl mx-auto p-6 space-y-6">
@@ -32,6 +34,7 @@ export default async function ProfilePage() {
             <div className="flex gap-3">
                 {showMicrosoft && <ConnectMicrosoftButton />}
                 {showGoogle && <ConnectGoogleButton />}
+                {showSteam && <ConnectSteamButton />}
                 <ConnectedAccountsPanel />
             </div>
 
