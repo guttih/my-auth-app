@@ -222,8 +222,17 @@ export default function AdminUsersPage() {
                         <button onClick={() => setSelectedUser(null)} className="absolute top-2 right-2 text-gray-600 hover:text-black text-xl">
                             ×
                         </button>
-                        <UserForm initialData={selectedUser} isAdmin={true} onSubmit={handleFormSubmit} />
-                        {selectedUser.id && <ConnectedAccountsPanel userId={selectedUser.id} showConnectButtons={false} allowUnlink={true} />}
+                        <UserForm initialData={selectedUser} isAdmin={true} onSubmit={handleFormSubmit} formId="admin-user-form" hideSubmit />
+                        {selectedUser.id && (
+                            <ConnectedAccountsPanel
+                                userId={selectedUser.id}
+                                showConnectButtons={false} // <-- hide connect buttons on admin
+                                allowUnlink={true}
+                            />
+                        )}
+                        <Button type="submit" form="admin-user-form" variant="important" className="w-full mt-4">
+                            Save
+                        </Button>
                     </div>
                 </div>
             )}

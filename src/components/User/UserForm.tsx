@@ -1,5 +1,4 @@
 // src/components/User/UserForm.tsx
-
 import { useState } from "react";
 import ImageUpload from "@/components/ImageUpload";
 import type { UserFormData } from "@/types/user";
@@ -10,9 +9,13 @@ interface UserFormProps {
     initialData?: Partial<UserFormData>;
     isAdmin?: boolean;
     onSubmit: (data: UserFormData) => void;
+    /** allows an external <button form="..."> to submit */
+    formId?: string;
+    /** hides the built-in Save button so pages can place it elsewhere */
+    hideSubmit?: boolean;
 }
 
-export default function UserForm({ initialData = {}, isAdmin = false, onSubmit }: UserFormProps) {
+export default function UserForm({ initialData = {}, isAdmin = false, onSubmit, formId, hideSubmit = false }: UserFormProps) {
     const [selectedFile, setSelectedFile] = useState<File | null>(null);
     const [formData, setFormData] = useState<UserFormData>({
         id: initialData.id,
@@ -59,7 +62,7 @@ export default function UserForm({ initialData = {}, isAdmin = false, onSubmit }
         "mt-1 block w-full px-4 py-2 border rounded-md shadow-sm bg-[var(--input-bg)] text-[var(--foreground)] border-[var(--border)] focus:ring-blue-500 focus:border-blue-500";
 
     return (
-        <form onSubmit={handleSubmit} className="space-y-4">
+        <form id={formId} onSubmit={handleSubmit} className="space-y-4">
             <h2 className="text-2xl font-semibold text-center mb-4 text-[var(--foreground)]">{initialData.id ? "Edit User" : "Create User"}</h2>
 
             {formData.id && <ImageUpload value={formData.profileImage} onChange={(file) => setSelectedFile(file)} filename={`user-${formData.id}`} />}
@@ -92,18 +95,16 @@ export default function UserForm({ initialData = {}, isAdmin = false, onSubmit }
             </div>
 
             {isAdmin && (
-                <>
-                    <div>
-                        <label htmlFor="role" className="block text-sm font-medium text-[var(--foreground)]">
-                            Role
-                        </label>
-                        <select id="role" name="role" value={formData.role} onChange={handleChange} className={inputClass}>
-                            <option value="VIEWER">Viewer</option>
-                            <option value="MODERATOR">Moderator</option>
-                            <option value="ADMIN">Admin</option>
-                        </select>
-                    </div>
-                </>
+                <div>
+                    <label htmlFor="role" className="block text-sm font-medium text-[var(--foreground)]">
+                        Role
+                    </label>
+                    <select id="role" name="role" value={formData.role} onChange={handleChange} className={inputClass}>
+                        <option value="VIEWER">Viewer</option>
+                        <option value="MODERATOR">Moderator</option>
+                        <option value="ADMIN">Admin</option>
+                    </select>
+                </div>
             )}
 
             <div>
@@ -113,9 +114,14 @@ export default function UserForm({ initialData = {}, isAdmin = false, onSubmit }
                 <input id="password" name="password" type="password" value={formData.password || ""} onChange={handleChange} className={inputClass} />
             </div>
 
-            <Button type="submit" variant="important" className="w-full py-2 px-4">
-                Save
-            </Button>
+            {hideSubmit ? (
+                // keeps Enter-to-submit working without showing a button
+                <button type="submit" className="sr-only" aria-hidden="true" tabIndex={-1} />
+            ) : (
+                <Button type="submit" variant="important" className="w-full py-2 px-4">
+                    Save
+                </Button>
+            )}
         </form>
     );
 }

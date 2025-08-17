@@ -6,7 +6,7 @@ import { confirmDialog } from "../ui/ConfirmDialog/ConfirmDialog";
 import { showMessageBox } from "@/components/ui/MessageBox/MessageBox";
 import { ProviderId } from "@/lib/auth/provider-ids";
 import { Button } from "../ui/Button/Button";
-import { redirect } from "next/navigation";
+import { useRouter } from "next/navigation";
 
 type OAuthProviderId = typeof ProviderId.Google | typeof ProviderId.AzureAd | typeof ProviderId.Steam;
 
@@ -43,6 +43,7 @@ function providerInitial(p: string) {
 export default function ConnectedAccountsPanel({ userId, showConnectButtons = true, allowUnlink = true }: Props) {
     const [accounts, setAccounts] = useState<LinkedAccount[]>([]);
     const [loading, setLoading] = useState(true);
+    const router = useRouter();
 
     async function load() {
         setLoading(true);
@@ -129,7 +130,7 @@ export default function ConnectedAccountsPanel({ userId, showConnectButtons = tr
                     </div>
 
                     {a.provider === ProviderId.Steam && a.providerAccountId && (
-                        <Button onClick={() => redirect("/profile/steam")} className="w-full py-2 px-4" title="View your Steam profile">
+                        <Button onClick={() => router.push("/profile/steam")} className="w-full py-2 px-4" title="View">
                             View Steam Profile
                         </Button>
                     )}
