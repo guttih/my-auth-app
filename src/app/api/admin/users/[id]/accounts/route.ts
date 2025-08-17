@@ -1,11 +1,24 @@
 // src/app/api/admin/users/[id]/accounts/route.ts
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
-import { getServerSession } from "next-auth";
-import { authOptions } from "@/lib/auth";
+import { auth } from "@/auth";
 import { hasAdminAccess } from "@/utils/auth/accessControl";
 
-function decodeJwtPayload(token?: string | null) {
+export const dynamic = "force-dynamic"; // session/cookies => dynamic
+export const revalidate = 0;
+
+type Params = { id: string };
+
+type JwtClaims = {
+    email?: string;
+    preferred_username?: string;
+    upn?: string;
+    unique_name?: string;
+    name?: string;
+    picture?: string;
+};
+
+function decodeJwtPayload(token?: string | null): JwtClaims {
     if (!token) return {};
     try {
         const [, payload] = token.split(".");
@@ -15,21 +28,31 @@ function decodeJwtPayload(token?: string | null) {
     }
 }
 
-export async function GET(_req: Request, { params }: { params: { id: string } }) {
-    const session = await getServerSession(authOptions);
-    if (!session?.user || !hasAdminAccess(session.user)) return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+export async function GET(_req: Request, ctx: { params: Promise<Params> }) {
+    const { id } = await ctx.params;
+
+    const session = await auth();
+    if (!session?.user || !hasAdminAccess(session.user)) {
+        return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+    }
 
     const rows = await prisma.account.findMany({
-        where: { userId: params.id },
+        where: { userId: id },
         select: { id: true, provider: true, providerAccountId: true, id_token: true },
         orderBy: { provider: "asc" },
     });
 
     const accounts = rows.map((a) => {
-        const c: any = decodeJwtPayload(a.id_token);
-        const label = c?.email ?? c?.preferred_username ?? c?.upn ?? c?.unique_name ?? c?.name ?? a.providerAccountId;
-        const picture = c?.picture as string | undefined;
-        return { id: a.id, provider: a.provider, providerAccountId: a.providerAccountId, label, picture };
+        const c = decodeJwtPayload(a.id_token);
+        const label = c.email ?? c.preferred_username ?? c.upn ?? c.unique_name ?? c.name ?? a.providerAccountId;
+
+        return {
+            id: a.id,
+            provider: a.provider,
+            providerAccountId: a.providerAccountId,
+            label,
+            picture: c.picture,
+        };
     });
 
     return NextResponse.json({ accounts });

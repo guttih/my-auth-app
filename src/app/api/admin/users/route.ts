@@ -1,8 +1,7 @@
 // src/app/api/admin/users/route.ts
 
 import { NextRequest, NextResponse } from "next/server";
-import { getServerSession } from "next-auth";
-import { authOptions } from "@/lib/auth";
+import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
 import { hasAdminAccess } from "@/utils/auth/accessControl";
 import bcrypt from "bcrypt";
@@ -10,7 +9,7 @@ import type { UserFormData } from "@/types/user";
 
 // Get all users
 export async function GET() {
-    const session = await getServerSession(authOptions);
+    const session = await auth();
     if (!session || !hasAdminAccess(session.user)) {
         return new NextResponse("Unauthorized", { status: 401 });
     }
@@ -34,7 +33,7 @@ export async function GET() {
 
 // Create a new user
 export async function POST(req: NextRequest) {
-    const session = await getServerSession(authOptions);
+    const session = await auth();
     if (!session || !hasAdminAccess(session.user)) {
         return new NextResponse("Unauthorized", { status: 401 });
     }

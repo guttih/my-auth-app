@@ -4,8 +4,9 @@
 import { useEffect, useState } from "react";
 import UserForm from "@/components/User/UserForm";
 import { UserFormData } from "@/types/user";
+import { setTheme } from "@/lib/theme/client";
 
-export default function SelfEditForm() {
+export default function SelfEditForm({ formId }: { formId?: string }) {
     const [userData, setUserData] = useState<Partial<UserFormData> | null>(null);
     const [loading, setLoading] = useState(true);
     const [message, setMessage] = useState("");
@@ -47,11 +48,9 @@ export default function SelfEditForm() {
             }
 
             if (theme) {
-                document.documentElement.setAttribute("data-theme", theme);
-                localStorage.setItem("theme", theme);
+                setTheme(theme);
             }
-
-            setMessage("Profile updated successfully ✅");
+            // setMessage("Profile updated successfully! 🎉");
         } catch (err) {
             console.error(err);
             setMessage("Error updating profile ❌");
@@ -63,8 +62,8 @@ export default function SelfEditForm() {
 
     return (
         <>
-            {message && <p className="text-sm text-center text-blue-600 mb-4">{message}</p>}
-            <UserForm initialData={userData} isAdmin={false} onSubmit={handleSubmit} />
+            {message && <p className="text-sm text-center text-red-600 mb-4">{message}</p>}
+            <UserForm initialData={userData} isAdmin={false} onSubmit={handleSubmit} formId={formId} hideSubmit={!!formId} />
         </>
     );
 }

@@ -48,6 +48,25 @@ ALTER ROLE guttih CREATEDB;
 \q
 ----
 
+==== Launching postgres server manually
+
+Start the server
+[source,bash]
+----
+#in Forground mode
+sudo -u postgres /usr/bin/postgres -D /var/lib/pgsql/data
+
+#or in Background mode
+sudo -u postgres /usr/bin/pg_ctl -D /var/lib/pgsql/data -l /var/lib/pgsql/data/logfile start
+----
+
+To stop background server
+[source,bash]
+----
+s aux | grep "postgres -D"
+sudo kill -9 <PID>
+----
+
 
 ==== Configure Environment Variables
 Create a .env file in the project root with your database connection string:
@@ -116,6 +135,14 @@ For Google:
 ----
 GOOGLE_CLIENT_ID=xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx.apps.googleusercontent.com
 GOOGLE_CLIENT_SECRET=xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
+----
+
+For Steam:
+you need to get a Steam Web API Key from https://steamcommunity.com/dev/apikey
+
+[source,env]
+----
+STEAM_API_KEY=XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 ----
 
 for production create a **.env.production** file with the same content as .env.local, but with `ALLOW_PASSWORD_WHEN_OAUTH=false` to disable password login when OAuth is enabled.

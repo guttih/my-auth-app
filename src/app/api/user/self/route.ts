@@ -1,6 +1,5 @@
 // src/app/api/user/self/route.ts
-import { getServerSession } from "next-auth";
-import { authOptions } from "@/lib/auth";
+import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
 import { NextResponse } from "next/server";
 import bcrypt from "bcrypt";
@@ -12,14 +11,16 @@ export const revalidate = 0;
 
 // Generic helper; no `any`
 function json<T>(data: T, init?: number | ResponseInit) {
-    const res = NextResponse.json<T>(data, init);
+    const initObj: ResponseInit | undefined = typeof init === "number" ? { status: init } : init;
+
+    const res = NextResponse.json<T>(data, initObj);
     // Personal data: prevent any caching layers
     res.headers.set("Cache-Control", "no-store, max-age=0");
     return res;
 }
 
 export async function GET() {
-    const session = await getServerSession(authOptions);
+    const session = await auth();
     if (!session?.user?.id) return json({ error: "Unauthorized" }, { status: 401 });
 
     const user = await prisma.user.findUnique({
@@ -49,7 +50,7 @@ export async function GET() {
 }
 
 export async function PATCH(req: Request) {
-    const session = await getServerSession(authOptions);
+    const session = await auth();
     if (!session?.user?.id) return json({ error: "Unauthorized" }, { status: 401 });
 
     const { username, email, password, theme, profileImage } = await req.json();
