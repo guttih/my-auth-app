@@ -3,6 +3,8 @@ import { credentialsProvider } from "./credentials";
 import azureAdProvider from "./azure-ad";
 import googleProvider from "./google";
 import type { Provider } from "next-auth/providers";
+import steamProvider from "./steam";
+import { NextRequest } from "next/server";
 
 function envBool(name: string, def = true) {
     const v = (process.env[name] ?? "").trim().toLowerCase();
@@ -10,7 +12,7 @@ function envBool(name: string, def = true) {
     return !["false", "0", "no", "off"].includes(v);
 }
 
-export function getProviders(): Provider[] {
+export function getProviders(req?: NextRequest): Provider[] {
     const providers: Provider[] = [];
 
     const credentialsEnabled = envBool("AUTH_CREDENTIALS_ENABLED", true);
@@ -24,9 +26,8 @@ export function getProviders(): Provider[] {
         providers.push(googleProvider());
     }
 
-    if (process.env.STEAM_SECRET && process.env.STEAM_API_KEY) {
-        console.warn("Steam provider is not implemented yet. Please implement it in src/app/api/auth/providers/steam.ts");
-        // providers.push(steamProvider(req)); // req optional; steamProvider handles fallback
+    if (process.env.STEAM_SECRET && req) {
+        providers.push(steamProvider(req));
     }
 
     return providers;

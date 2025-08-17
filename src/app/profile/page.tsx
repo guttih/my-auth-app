@@ -6,22 +6,20 @@ import ConnectMicrosoftButton from "@/components/User/ConnectMicrosoftButton";
 import ConnectGoogleButton from "@/components/User/ConnectGoogleButton";
 import ConnectedAccountsPanel from "@/components/User/ConnectedAccountsPanel";
 import ConnectSteamButton from "@/components/User/ConnectSteamButton";
+import { ProviderId } from "@/lib/auth/provider-ids";
 import Link from "next/link";
 
-// ✅ reuse your env-driven provider list
-import { getProviders as getAuthProviders } from "@/app/api/auth/providers";
+import { globalProviders } from "@/lib/auth/policy";
 
 export default async function ProfilePage() {
     const session = await auth();
     if (!session?.user) redirect("/login");
 
-    const providers = getAuthProviders();
-    // Only consider oauth providers for linking
-    const enabled = new Set(providers.filter((p: any) => p.type === "oidc").map((p: any) => p.id as string));
+    const enabled = globalProviders();
 
-    const showGoogle = enabled.has("google");
-    const showMicrosoft = enabled.has("azure-ad");
-    const showSteam = enabled.has("steam");
+    const showGoogle = enabled.google;
+    const showMicrosoft = enabled[ProviderId.AzureAd];
+    const showSteam = enabled.steam;
 
     return (
         <div className="max-w-2xl mx-auto p-6 space-y-6">

@@ -1,4 +1,5 @@
 // src/auth.ts
+
 import NextAuth from "next-auth";
 import { PrismaAdapter } from "@auth/prisma-adapter";
 import { prisma } from "@/lib/prisma";
@@ -46,10 +47,10 @@ export const {
     auth,
     signIn,
     signOut,
-} = NextAuth({
+} = NextAuth((req) => ({
     // Prisma + your provider list
     adapter: PrismaAdapter(prisma),
-    providers: getProviders(),
+    providers: getProviders(req),
 
     // Keep JWT sessions (your code expects it)
     session: { strategy: "jwt" },
@@ -141,4 +142,4 @@ export const {
             /* no-op for now */
         },
     },
-});
+}));
