@@ -28,9 +28,9 @@ Read more about Prisma at https://www.prisma.io/docs and locally at link:../node
 
 ==== DB commands
 
-.Open a terminal and connect to the PostgreSQL database guttihdb:
+.Open a terminal and connect to the PostgreSQL database myauthdb:
 [source,bash]
- sudo -u postgres psql -d guttihdb
+ sudo -u postgres psql -d myauthdb
 
 [source,sql]
 ----

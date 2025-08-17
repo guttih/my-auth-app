@@ -1,176 +1,272 @@
+
 == 🛠️ Setup Instructions for `my-auth-app`
 
-This guide installs all required tools and runs the Next.js + PostgreSQL + NextAuth + Prisma app.
+This guide installs all required tools and runs the Next.js + PostgreSQL + NextAuth + Prisma app — with step‑by‑step links for getting Google/Microsoft OAuth credentials.
 
 ---
 
-=== ✅ 1. Install System Requirements
+=== ✅ 0) After package.json changes — do a clean install
+When you change core deps (Next, React, Prisma, NextAuth) or scripts, do a clean reinstall to avoid stale builds.
+
+[source,bash]
+----
+# from project root
+rm -rf node_modules .next .turbo
+npm cache verify
+
+# Prefer reproducible installs if you have package-lock.json:
+npm ci
+# otherwise:
+# npm install
+
+# (postinstall should run prisma generate, but this is safe to run explicitly)
+npx prisma generate
+
+# Optional sanity checks
+node -v           # >= 20.10.0
+npx prisma -v     # prisma & @prisma/client versions align
+----
+
+---
+
+=== ✅ 1) Install System Requirements
 
 ==== Ubuntu / Debian
 [source,bash]
 ----
 sudo apt update
-sudo apt install nodejs npm postgresql postgresql-contrib
-----
-
-Optional (if node version is too old):
-[source,bash]
-----
+sudo apt install -y nodejs npm postgresql postgresql-contrib
+# (Optional) If Node is too old:
 sudo npm install -g n
-sudo n latest
+sudo n lts
 ----
 
-==== Fedora / Rocky linux
-
-===== Manually on windows wsl - fedora
-
+==== Fedora / Rocky Linux
 [source,bash]
 ----
-sudo dnf install nodejs npm postgresql postgresql-contrib postgresql-server
-sudo -u postgres initdb -D /var/lib/pgsql/data --auth=peer --auth-host=md5
+sudo dnf install -y nodejs npm postgresql postgresql-server postgresql-contrib
+# Initialize and start PostgreSQL (RHEL/Fedora family):
+sudo /usr/bin/postgresql-setup --initdb
 sudo systemctl enable --now postgresql
 ----
 
-=== ✅ 2. Create PostgreSQL User and Database
+==== Windows (WSL recommended)
+Install Ubuntu in WSL, then follow the Ubuntu steps above. You can run PostgreSQL either inside WSL or in Docker.
 
+---
+
+=== ✅ 2) Create PostgreSQL User and Database
+
+Switch to the postgres superuser and open psql:
 [source,bash]
 ----
 sudo -i -u postgres
 psql
 ----
 
-In the psql prompt:
+Inside `psql`:
 [source,sql]
 ----
-CREATE USER guttih WITH PASSWORD 'hunter2';
-CREATE DATABASE guttihdb OWNER guttih;
-ALTER ROLE guttih CREATEDB;
+CREATE USER appuser WITH PASSWORD 'hunter2';
+CREATE DATABASE myauthdb OWNER appuser;
+ALTER ROLE appuser CREATEDB;
 \q
 ----
 
-==== Launching postgres server manually
+(If PostgreSQL is not running, start it with `sudo systemctl start postgresql`).
 
-Start the server
+==== (Optional) Manual server control
 [source,bash]
 ----
-#in Forground mode
+# Foreground
 sudo -u postgres /usr/bin/postgres -D /var/lib/pgsql/data
 
-#or in Background mode
+# Background
 sudo -u postgres /usr/bin/pg_ctl -D /var/lib/pgsql/data -l /var/lib/pgsql/data/logfile start
-----
 
-To stop background server
-[source,bash]
-----
-s aux | grep "postgres -D"
+# Stop background server
+ps aux | grep "postgres -D"
 sudo kill -9 <PID>
 ----
 
+---
 
-==== Configure Environment Variables
-Create a .env file in the project root with your database connection string:
+=== ✅ 3) Configure Environment & Prisma
+
+Create `.env` in the project root with your database connection string:
 [source,bash]
 ----
-touch .env
+touch .env && echo 'DATABASE_URL="postgresql://appuser:hunter2@localhost:5432/myauthdb"' >> .env
 ----
-Then edit .env to include the line
 
-[source,env]
-----
-DATABASE_URL="postgresql://guttih:hunter2@localhost:5432/guttihdb"
-----
-Replace `guttih` and `hunter2` with your actual PostgreSQL username and password, if different.
-
-Test the connection string as user postgres
+Test the connection (as postgres superuser):
 [source,bash]
 ----
-sudo -u postgres
-psql "postgresql://guttih:hunter2@localhost:5432/guttihdb" -c "select current_user, current_database();"
-
+sudo -i -u postgres psql "postgresql://appuser:hunter2@localhost:5432/myauthdb" -c "select current_user, current_database();"
 ----
 
+Install packages and set up Prisma:
+[source,bash]
+----
+npm install
+
+# If you don't have prisma/schema.prisma yet:
+npx prisma init    # creates prisma/schema.prisma and .env examples
+
+# Run migrations and generate the client
+npx prisma migrate dev --name init
+npx prisma generate
+
+# (Optional) Seed if you have a seed script
+npx tsx prisma/seed.ts
+----
+
+> Gotchas
+>
+> * If `npx prisma migrate dev` complains “Could not find Prisma Schema”, run `npx prisma init` first.
+> * Keep `prisma` and `@prisma/client` **on the same version**.
+> * Don’t forget a valid `.env` on the server — the app will fail without `DATABASE_URL`.
+> * `npx tsx prisma/seed.ts` requires `tsx` and proper TS config; use it only if you’ve set that up.
 
 ---
 
-=== ✅ 3. Install Node.js Packages
+=== ✅ 4) App Environment (local dev)
 
-[source,bash]
-----
-# Runtime dependencies — needed in both development and production
-npm install
-
-npx prisma migrate dev --name init
-npx tsx prisma/seed.ts
-npm i -D prisma # dev dependency
-npx prisma generate
-
-----
-
-Gotchas to avoid:
-- npx tsx prisma/seed.ts → ❌ This needs tsx and tsconfig.json, so only run it before deploying.
-- Don't forget .env on the server — your app will fail without DATABASE_URL.
-
-and create a **.env.local** file with someting like this:
+Create `.env.local`:
 [source,env]
 ----
 NEXTAUTH_URL=http://localhost:3000
-NEXTAUTH_SECRET=kmLumZtBmGIMkJhANnbjeAI4vPrWs78peWawyQip7U4=
+# Secret for NextAuth (generate a strong value):
+NEXTAUTH_SECRET=replace_me
+
+# App feature toggles (example flags used by this repo)
 DISABLE_PASSWORD_WHEN_LINKED_ACCOUNT=false
 AUTH_CREDENTIALS_ENABLED=false
----
+----
 
-If you want to allow microsoft and/or google login, add these to your .env.local:
+Generate a strong secret (choose one):
+[source,bash]
+----
+# OpenSSL
+openssl rand -base64 32
 
-For Microsoft (Azure AD / Entra):
+# or Auth.js CLI
+npx auth secret
+----
+
+For production, create `.env.production` mirroring `.env.local`. If your app supports it, set:
 [source,env]
 ----
-AZURE_AD_CLIENT_ID=xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx
-AZURE_AD_CLIENT_SECRET=xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
-AZURE_AD_TENANT_ID=xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx
+ALLOW_PASSWORD_WHEN_OAUTH=false
 ----
 
-For Google:
+---
+
+=== ✅ 5) OAuth Provider Setup (Google & Microsoft)
+
+You need OAuth client credentials for providers you enable. Below are minimal, **working** dev setups.
+
+==== Google — Create OAuth Client ID
+1. Open Google Cloud Console → **APIs & Services → OAuth consent screen**. Choose **External** for quick testing and add yourself under **Test users**.  
+2. Go to **APIs & Services → Credentials → Create Credentials → OAuth client ID**. Pick **Web application**.  
+3. Add **Authorized JavaScript origins** and **Authorized redirect URIs**:
+
+   * Dev origins:  
+     `http://localhost:3000`
+   * Dev redirect:  
+     `http://localhost:3000/api/auth/callback/google`
+   * Production redirect (example):  
+     `https://YOUR_DOMAIN/api/auth/callback/google`
+
+4. Copy **Client ID** and **Client secret** into `.env.local`:
 [source,env]
 ----
 GOOGLE_CLIENT_ID=xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx.apps.googleusercontent.com
 GOOGLE_CLIENT_SECRET=xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
 ----
 
-For Steam:
-you need to get a Steam Web API Key from https://steamcommunity.com/dev/apikey
+Notes:
+* If you get `redirect_uri_mismatch`, ensure the callback exactly matches what you set in the Google Console.
+* While the consent screen is in **Testing**, only **Test users** can sign in. Publish to **In production** if you need broader access.
 
+==== Microsoft (Entra ID / Azure AD) — App Registration
+1. Open **Azure Portal** → **Microsoft Entra ID** → **App registrations** → **New registration**.  
+   * **Supported account types**: choose what you need (many apps use **Accounts in any org directory and personal Microsoft accounts**).  
+2. Add a **Redirect URI** of type **Web**:  
+   * Dev: `http://localhost:3000/api/auth/callback/azure-ad`  
+   * Prod: `https://YOUR_DOMAIN/api/auth/callback/azure-ad`
+3. After creating the app, go to **Certificates & secrets** → **New client secret** (copy the **Value** now).  
+4. Go to **API permissions** → add **Microsoft Graph → User.Read** and **Grant admin consent** (so user profile can be read).  
+5. Copy these values into `.env.local`:
+[source,env]
+----
+AZURE_AD_CLIENT_ID=xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx        # Application (client) ID
+AZURE_AD_CLIENT_SECRET=xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx   # Client secret (value)
+AZURE_AD_TENANT_ID=xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx         # Directory (tenant) ID (or use 'common' for multi-tenant)
+----
+
+> Tip: Multi-tenant apps can use `AZURE_AD_TENANT_ID=common` during dev. Use your real Tenant ID when you need to restrict to a specific directory.
+
+==== Steam
+Get a Steam Web API key at: https://steamcommunity.com/dev/apikey  
+Add to `.env.local`:
 [source,env]
 ----
 STEAM_API_KEY=XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 ----
 
-for production create a **.env.production** file with the same content as .env.local, but with `ALLOW_PASSWORD_WHEN_OAUTH=false` to disable password login when OAuth is enabled.
+---
 
-=== ✅ 4. Run the App
-
+=== ✅ 6) Run the App
 [source,bash]
 ----
+npm run build   # catches type errors ahead of time
 npm run dev
 ----
 
-Then open: http://localhost:3000/login[http://localhost:3000/login]
+Open: http://localhost:3000/login
 
-Login credentials:
-
-- *Email:* `admin@guttih.com`
-- *Password:* `hunter2`
-
+If the database has no users, the first person who visits the login page will be redirected to /first-user, where they can create their account. That account will become the admin account.
 ---
 
-=== ✅ 5. Optional: Browse DB in Prisma Studio
-
+=== ✅ 7) Optional: Browse DB in Prisma Studio
 [source,bash]
 ----
 npx prisma studio
 ----
 
-Opens a UI at http://localhost:5555[http://localhost:5555]
+Opens a UI at: http://localhost:5555
+
+---
+
+=== 📦 Appendix: Recommended package.json scripts & settings
+
+Add these to your `package.json`:
+
+[source,json]
+----
+{
+  "private": true,
+  "engines": { "node": ">=20.10.0" },
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "lint": "next lint",
+    "typecheck": "tsc --noEmit",
+    "db:show": "prisma studio",
+    "db:migrate": "prisma migrate dev",
+    "db:generate": "prisma generate",
+    "db:seed": "tsx prisma/seed.ts",
+    "postinstall": "prisma generate"
+  }
+}
+----
+
+Notes:
+* Keep `prisma` and `@prisma/client` versions aligned (e.g., both `6.14.0`).
+* You generally **don’t** need a custom `build:css`; Next handles CSS from `src/app/globals.css`.
+* Don’t add `npm` as a dependency; it’s your package manager, not an app runtime dep.
 
 ---
 
