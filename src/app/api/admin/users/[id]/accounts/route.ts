@@ -1,8 +1,7 @@
 // src/app/api/admin/users/[id]/accounts/route.ts
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
-import { getServerSession } from "next-auth";
-import { authOptions } from "@/lib/auth";
+import { auth } from "@/auth";
 import { hasAdminAccess } from "@/utils/auth/accessControl";
 
 export const dynamic = "force-dynamic"; // session/cookies => dynamic
@@ -32,7 +31,7 @@ function decodeJwtPayload(token?: string | null): JwtClaims {
 export async function GET(_req: Request, ctx: { params: Promise<Params> }) {
     const { id } = await ctx.params;
 
-    const session = await getServerSession(authOptions);
+    const session = await auth();
     if (!session?.user || !hasAdminAccess(session.user)) {
         return NextResponse.json({ error: "Forbidden" }, { status: 403 });
     }

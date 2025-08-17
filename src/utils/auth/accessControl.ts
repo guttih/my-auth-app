@@ -12,7 +12,7 @@ export function hasRole(user: { role?: string }, required: Role): boolean {
     return userIndex >= requiredIndex;
 }
 
-// User session object as received from getServerSession
+// User session object as received from auth
 export function hasAdminAccess(user: { role?: string }): boolean {
     return hasRole(user, Role.ADMIN);
 }

@@ -1,12 +1,11 @@
 // src/app/dashboard/page.tsx
-import { getServerSession } from "next-auth";
-import { authOptions } from "@/lib/auth";
+import { auth } from "@/auth";
 import LogoutButton from "@/components/LogoutButton";
 import { redirect } from "next/navigation";
 import Link from "next/link";
 
 export default async function DashboardPage() {
-    const session = await getServerSession(authOptions);
+    const session = await auth();
 
     if (!session) {
         redirect("/login");

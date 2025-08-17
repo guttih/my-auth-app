@@ -1,8 +1,7 @@
 // src/app/api/admin/users/[id]/route.ts
 
 import { NextRequest, NextResponse } from "next/server";
-import { getServerSession } from "next-auth";
-import { authOptions } from "@/lib/auth";
+import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
 import { hasAdminAccess } from "@/utils/auth/accessControl";
 import bcrypt from "bcrypt";
@@ -11,7 +10,7 @@ import type { Prisma } from "@prisma/client";
 
 // Get spesific user
 export async function GET(_: NextRequest, context: { params: Promise<{ id: string }> }) {
-    const session = await getServerSession(authOptions);
+    const session = await auth();
     if (!session?.user || !hasAdminAccess(session.user)) {
         return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
@@ -44,7 +43,7 @@ export async function GET(_: NextRequest, context: { params: Promise<{ id: strin
 
 // Update an existing user
 export async function PATCH(req: Request, context: { params: { id: string } }) {
-    const session = await getServerSession(authOptions);
+    const session = await auth();
     if (!session?.user || !hasAdminAccess(session.user)) {
         return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
@@ -88,7 +87,7 @@ export async function PATCH(req: Request, context: { params: { id: string } }) {
 
 // Delete an existing user user
 export async function DELETE(_: NextRequest, context: { params: Promise<{ id: string }> }) {
-    const session = await getServerSession(authOptions);
+    const session = await auth();
     if (!session?.user || !hasAdminAccess(session.user)) {
         return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }

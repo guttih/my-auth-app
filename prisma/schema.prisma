@@ -12,6 +12,7 @@ enum AuthProvider {
   LOCAL
   AD
   GOOGLE
+  STEAM
 }
 
 enum Role {
@@ -60,6 +61,9 @@ model Account {
   session_state      String?
   ext_expires_in             Int?
   refresh_token_expires_in   Int?
+
+  label              String?
+  image              String?
 
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 

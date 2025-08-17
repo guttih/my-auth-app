@@ -1,6 +1,5 @@
 // src/app/api/user/self/route.ts
-import { getServerSession } from "next-auth";
-import { authOptions } from "@/lib/auth";
+import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
 import { NextResponse } from "next/server";
 import bcrypt from "bcrypt";
@@ -19,7 +18,7 @@ function json<T>(data: T, init?: number | ResponseInit) {
 }
 
 export async function GET() {
-    const session = await getServerSession(authOptions);
+    const session = await auth();
     if (!session?.user?.id) return json({ error: "Unauthorized" }, { status: 401 });
 
     const user = await prisma.user.findUnique({
@@ -49,7 +48,7 @@ export async function GET() {
 }
 
 export async function PATCH(req: Request) {
-    const session = await getServerSession(authOptions);
+    const session = await auth();
     if (!session?.user?.id) return json({ error: "Unauthorized" }, { status: 401 });
 
     const { username, email, password, theme, profileImage } = await req.json();

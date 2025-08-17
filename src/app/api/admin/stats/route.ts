@@ -1,11 +1,10 @@
 // src/app/api/admin/stats/route.ts
 import { prisma } from "@/lib/prisma";
-import { getServerSession } from "next-auth";
-import { authOptions } from "@/lib/auth";
+import { auth } from "@/auth";
 import { hasAdminAccess } from "@/utils/auth/accessControl";
 
 export async function GET() {
-    const session = await getServerSession(authOptions);
+    const session = await auth();
     if (!session || !hasAdminAccess(session.user)) {
         return new Response("Forbidden", { status: 403 });
     }

@@ -1,6 +1,5 @@
 // src/app/api/user/self/accounts/route.ts
-import { getServerSession } from "next-auth";
-import { authOptions } from "@/lib/auth";
+import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
 import { NextResponse } from "next/server";
 
@@ -16,7 +15,7 @@ function decodeJwtPayload(token?: string | null) {
 }
 
 export async function GET() {
-    const session = await getServerSession(authOptions);
+    const session = await auth();
     if (!session?.user?.id) {
         return NextResponse.json({ accounts: [] });
     }
@@ -51,7 +50,7 @@ export async function GET() {
 }
 
 export async function DELETE(req: Request) {
-    const session = await getServerSession(authOptions);
+    const session = await auth();
     if (!session?.user?.id) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
     const { accountId } = await req.json().catch(() => ({}));

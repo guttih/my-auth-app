@@ -24,6 +24,11 @@ export function getProviders(): Provider[] {
         providers.push(googleProvider());
     }
 
+    if (process.env.STEAM_SECRET && process.env.STEAM_API_KEY) {
+        console.warn("Steam provider is not implemented yet. Please implement it in src/app/api/auth/providers/steam.ts");
+        // providers.push(steamProvider(req)); // req optional; steamProvider handles fallback
+    }
+
     return providers;
 }
 

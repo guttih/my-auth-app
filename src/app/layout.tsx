@@ -1,7 +1,6 @@
 // src/app/layout.tsx
 import "./globals.css";
-import { getServerSession } from "next-auth";
-import { authOptions } from "@/lib/auth";
+import { auth } from "@/auth";
 import type { Metadata } from "next";
 import { Providers } from "./providers";
 import { cookies } from "next/headers";
@@ -14,7 +13,7 @@ export const metadata: Metadata = {
 };
 
 export default async function RootLayout({ children }: { children: React.ReactNode }) {
-    const session = await getServerSession(authOptions);
+    const session = await auth();
     const cookieTheme = (await cookies()).get("theme")?.value as Theme | undefined;
 
     // Priority: DB/session → cookie → 'light'
