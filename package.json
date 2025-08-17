@@ -1,22 +1,31 @@
 {
     "name": "my-auth-app",
     "version": "1.0.0",
-    "main": "index.js",
-    "scripts": {
-        "test": "echo \"Error: no test specified\" && exit 1",
-        "dev": "next dev",
-        "lint": "npx next lint",
-        "db:show": "npx prisma studio",
-        "db": "sudo -u postgres /usr/bin/postgres -D /var/lib/pgsql/data",
-        "build:css": "tailwindcss -i ./src/app/globals.css -o ./public/output.css --minify"
-    },
-    "keywords": [],
+    "private": true,
+    "description": "",
     "author": "Guðjón Hólm Sigurðsson",
     "license": "ISC",
-    "description": "",
+    "engines": {
+        "node": ">=20.10.0"
+    },
+    "scripts": {
+        "dev": "next dev",
+        "build": "next build",
+        "start": "next start",
+        "lint": "next lint",
+        "typecheck": "tsc --noEmit",
+        "db:show": "prisma studio",
+        "db:migrate": "prisma migrate dev",
+        "db:generate": "prisma generate",
+        "db:seed": "tsx prisma/seed.ts",
+        "prebuild": "npm run build:css || echo 'skipping separate Tailwind build'",
+        "build:css": "tailwindcss -i ./src/app/globals.css -o ./public/output.css --minify",
+        "postinstall": "prisma generate"
+    },
+    "keywords": [],
     "dependencies": {
         "@auth/prisma-adapter": "^2.10.0",
-        "@prisma/client": "^6.13.0",
+        "@prisma/client": "^6.14.0",
         "bcrypt": "^6.0.0",
         "classnames": "^2.5.1",
         "next": "^15.4.5",
@@ -36,6 +45,7 @@
         "eslint-config-next": "15.4.5",
         "prisma": "^6.14.0",
         "tailwindcss": "^4",
-        "tsx": "^4.20.3"
+        "tsx": "^4.20.3",
+        "typescript": "^5.9.2"
     }
 }

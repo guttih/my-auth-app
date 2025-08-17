@@ -50,6 +50,7 @@ export default function SelfEditForm({ formId }: { formId?: string }) {
             if (theme) {
                 setTheme(theme);
             }
+            // setMessage("Profile updated successfully! 🎉");
         } catch (err) {
             console.error(err);
             setMessage("Error updating profile ❌");
@@ -61,7 +62,7 @@ export default function SelfEditForm({ formId }: { formId?: string }) {
 
     return (
         <>
-            {message && <p className="text-sm text-center text-blue-600 mb-4">{message}</p>}
+            {message && <p className="text-sm text-center text-red-600 mb-4">{message}</p>}
             <UserForm initialData={userData} isAdmin={false} onSubmit={handleSubmit} formId={formId} hideSubmit={!!formId} />
         </>
     );

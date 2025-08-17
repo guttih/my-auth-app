@@ -11,8 +11,12 @@ export const credentialsProvider = CredentialsProvider({
         password: { label: "Password", type: "password" },
     },
     async authorize(credentials) {
-        const username = (credentials?.username ?? "").trim();
-        const password = credentials?.password ?? "";
+        const c = credentials as Record<string, unknown> | undefined;
+        const uRaw = c?.username;
+        const pRaw = c?.password;
+
+        const username = typeof uRaw === "string" ? uRaw.trim() : "";
+        const password = typeof pRaw === "string" ? pRaw : "";
         if (!username || !password) return null;
 
         const user = await prisma.user.findUnique({

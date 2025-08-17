@@ -1,12 +1,23 @@
 // src/auth.ts
-
-import NextAuth from "next-auth";
+import NextAuth, { type Session, type User as NextAuthUser } from "next-auth";
 import { PrismaAdapter } from "@auth/prisma-adapter";
 import { prisma } from "@/lib/prisma";
 import getProviders from "@/app/api/auth/providers";
 import type { Role, Theme } from "@prisma/client";
-import type { User } from "next-auth";
 import { getPlayerSummary } from "@/lib/steam";
+import type { JWT } from "next-auth/jwt";
+
+type AppJWT = JWT & {
+    id?: string;
+    role?: Role;
+    username?: string | null;
+    theme?: Theme;
+    lastProvider?: string;
+};
+
+function ensureTheme(t?: Theme): Theme {
+    return (t ?? "light") as Theme;
+}
 
 // ---------- Early sanity checks ----------
 if (process.env.NODE_ENV === "production" && !process.env.NEXTAUTH_SECRET) {
@@ -28,57 +39,42 @@ if (!process.env.NEXTAUTH_URL) {
     console.warn("[next-auth] NEXTAUTH_URL is not set. Set it to your site origin.");
 }
 
-// ---------- tiny type guards/utilities ----------
-function hasId(u: unknown): u is { id: string } {
-    return typeof u === "object" && u !== null && "id" in u && typeof (u as any).id === "string";
-}
-function setTokenTheme(token: unknown, theme: Theme) {
-    (token as Record<string, unknown>).theme = theme;
-}
-function getTokenTheme(token: unknown): Theme | undefined {
-    return (token as Record<string, unknown>).theme as Theme | undefined;
-}
-function hasTokenTheme(token: unknown): boolean {
-    return typeof (token as Record<string, unknown>).theme !== "undefined";
+// ---------- helpers ----------
+function hasId(u: Partial<NextAuthUser> | null | undefined): u is { id: string } {
+    return typeof u?.id === "string" && u.id.length > 0;
 }
 
-// ---------- v5: single entrypoint ----------
 export const {
     handlers: { GET, POST },
     auth,
     signIn,
     signOut,
 } = NextAuth((req) => ({
-    // Prisma + your provider list
     adapter: PrismaAdapter(prisma),
     providers: getProviders(req),
-
-    // Keep JWT sessions (your code expects it)
     session: { strategy: "jwt" },
-
-    // v5 still accepts this
     secret: process.env.NEXTAUTH_SECRET,
     pages: { signIn: "/login" },
 
     callbacks: {
-        /**
-         * Runs on sign-in, and whenever you call session.update() (trigger === 'update'),
-         * and periodically on requests (per NextAuth’s rotation strategy).
-         */
         async jwt({ token, user, account, trigger, session }) {
-            // keep user id on token
-            if (user && hasId(user)) token.id = user.id;
+            const t = token as AppJWT;
 
-            // reflect client-side session.update({ theme }) into the token
-            if (trigger === "update" && session?.theme) {
-                setTokenTheme(token, session.theme as Theme);
+            // keep user id on token
+            if (user && hasId(user)) t.id = user.id;
+
+            // reflect client-side session.update({ theme })
+            if (trigger === "update" && session && "theme" in session) {
+                t.theme = ensureTheme((session as { theme?: Theme }).theme);
             }
 
-            // ensure role/username/theme are sourced from DB unless already present
-            const needDb = !token.role || typeof token.username === "undefined" || !hasTokenTheme(token);
+            // ensure role/username/theme are sourced from DB unless present
+            const missingRole = !t.role;
+            const missingUsername = typeof t.username === "undefined";
+            const missingTheme = typeof t.theme === "undefined";
 
-            if (needDb) {
-                const where = token.id ? { id: token.id as string } : token.email ? { email: token.email as string } : null;
+            if (missingRole || missingUsername || missingTheme) {
+                const where = t.id && typeof t.id === "string" ? { id: t.id } : t.email && typeof t.email === "string" ? { email: t.email } : null;
 
                 if (where) {
                     const db = await prisma.user.findUnique({
@@ -86,44 +82,48 @@ export const {
                         select: { role: true, username: true, theme: true },
                     });
                     if (db) {
-                        token.role = db.role;
-                        token.username = db.username ?? null;
-                        setTokenTheme(token, (db.theme ?? "light") as Theme);
+                        if (missingRole) t.role = db.role;
+                        if (missingUsername) t.username = db.username ?? null;
+                        if (missingTheme) t.theme = ensureTheme(db.theme ?? "light");
+                    } else if (missingTheme) {
+                        t.theme = "light";
                     }
-                } else {
-                    // fallback default theme when we can't resolve a user
-                    if (!hasTokenTheme(token)) setTokenTheme(token, "light" as Theme);
+                } else if (missingTheme) {
+                    t.theme = "light";
                 }
             }
 
             // remember last OAuth provider (convenience only)
-            if (account?.provider) (token as any).lastProvider = account.provider;
+            if (account?.provider) t.lastProvider = account.provider;
 
-            return token;
+            return t;
         },
 
-        /**
-         * Shape the session sent to the client (and available to server via auth()).
-         */
         async session({ session, token }) {
+            const t = token as AppJWT;
             if (session.user) {
-                if (token.id) (session.user as any).id = token.id as string;
-                if (token.role) (session.user as any).role = token.role as Role;
-                if (typeof token.username !== "undefined") {
-                    (session.user as any).username = (token.username as string | null) ?? null;
-                }
-                (session.user as any).theme = getTokenTheme(token) ?? "light";
+                // augment the session user with our fields without using `any`
+                const u: typeof session.user & {
+                    id?: string;
+                    role?: Role;
+                    username?: string | null;
+                    theme?: Theme;
+                } = session.user;
+
+                if (t.id) u.id = t.id;
+                if (t.role) u.role = t.role;
+                if (typeof t.username !== "undefined") u.username = t.username ?? null;
+                u.theme = ensureTheme(t.theme);
+
+                session.user = u;
             }
-            return session;
+            return session as Session;
         },
     },
 
-    /**
-     * Event hooks — keep your defaults bootstrap.
-     */
     events: {
         async createUser({ user }) {
-            const email = (user as Pick<User, "email">).email ?? null;
+            const email = user.email ?? null;
             const baseName = email ? email.split("@")[0] : user.name ?? `user_${user.id.slice(0, 8)}`;
 
             await prisma.user.update({
@@ -131,18 +131,20 @@ export const {
                 data: {
                     role: "VIEWER",
                     username: baseName,
-                    // theme stays DB default (e.g., 'light')
                 },
             });
         },
+
         async signIn({ user, account }) {
             // eslint-disable-next-line no-console
             console.log(`User ${user.id} signed in with provider ${account?.provider}`);
         },
-        async linkAccount({ user, account }) {
+
+        // Drop unused `user` to satisfy no-unused-vars
+        async linkAccount({ account }) {
             if (account?.provider === "steam") {
                 try {
-                    const s = await getPlayerSummary(account.providerAccountId);
+                    await getPlayerSummary(account.providerAccountId);
                     // we could enrich the db, but not sure about the logic
                     // if (s) {
                     //     await prisma.user.update({

@@ -11,7 +11,9 @@ export const revalidate = 0;
 
 // Generic helper; no `any`
 function json<T>(data: T, init?: number | ResponseInit) {
-    const res = NextResponse.json<T>(data, init);
+    const initObj: ResponseInit | undefined = typeof init === "number" ? { status: init } : init;
+
+    const res = NextResponse.json<T>(data, initObj);
     // Personal data: prevent any caching layers
     res.headers.set("Cache-Control", "no-store, max-age=0");
     return res;

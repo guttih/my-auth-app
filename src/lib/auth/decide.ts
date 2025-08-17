@@ -58,13 +58,13 @@ function enforcePolicy(policy: OAuthPolicy, provider: OAuthProviderId, current: 
  */
 export async function preflightForUsername(username: string) {
     const uname = username.trim();
-    if (!uname) return { code: null as const };
+    if (!uname) return { code: null } as const;
 
     const user = await prisma.user.findUnique({
         where: { username: uname },
         select: { id: true },
     });
-    if (!user) return { code: null as const };
+    if (!user) return { code: null } as const;
 
     const vis = await visibleProvidersForUser(user.id);
 
@@ -87,5 +87,5 @@ export async function preflightForUsername(username: string) {
         return { code: "OAUTH_ONLY" as const, providers };
     }
 
-    return { code: null as const };
+    return { code: null } as const;
 }

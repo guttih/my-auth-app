@@ -1,26 +1,26 @@
 // src/components/User/ConnectedAccountsPanel.tsx
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useTransition } from "react"; // NEW
 import { confirmDialog } from "../ui/ConfirmDialog/ConfirmDialog";
 import { showMessageBox } from "@/components/ui/MessageBox/MessageBox";
 import { ProviderId } from "@/lib/auth/provider-ids";
 import { Button } from "../ui/Button/Button";
 import { useRouter } from "next/navigation";
+import Image from "next/image";
 
 type OAuthProviderId = typeof ProviderId.Google | typeof ProviderId.AzureAd | typeof ProviderId.Steam;
 
-// What comes back from /accounts endpoints (NextAuth Account rows transformed)
 type LinkedAccount = {
     id: string;
-    provider: OAuthProviderId | string; // keep string fallback for safety
+    provider: OAuthProviderId | string;
     providerAccountId: string;
     label?: string;
     picture?: string;
 };
 
 type Props = {
-    userId?: string; // if present => admin view of that user
+    userId?: string; // admin view if present
     showConnectButtons?: boolean; // default true (self profile); false for admin
     allowUnlink?: boolean; // default true
 };
@@ -29,7 +29,6 @@ function providerLabel(p: string) {
     if (p === ProviderId.Google) return "Google";
     if (p === ProviderId.AzureAd) return "Microsoft";
     if (p === ProviderId.Steam) return "Steam";
-    // fallback: prettify unknowns
     return p.replace(/-/g, " ");
 }
 
@@ -44,6 +43,7 @@ export default function ConnectedAccountsPanel({ userId, showConnectButtons = tr
     const [accounts, setAccounts] = useState<LinkedAccount[]>([]);
     const [loading, setLoading] = useState(true);
     const router = useRouter();
+    const [isPending, startTransition] = useTransition(); // NEW
 
     async function load() {
         setLoading(true);
@@ -66,6 +66,7 @@ export default function ConnectedAccountsPanel({ userId, showConnectButtons = tr
 
     async function unlink(id: string) {
         if (!allowUnlink) return;
+
         const ok = await confirmDialog({
             title: "Unlink account?",
             message: "Are you sure you want to unlink this account?",
@@ -74,23 +75,36 @@ export default function ConnectedAccountsPanel({ userId, showConnectButtons = tr
         });
         if (!ok) return;
 
-        const res = await fetch(userId ? `/api/admin/users/${userId}/accounts/${id}` : `/api/user/self/accounts`, {
-            method: "DELETE",
-            headers: { "Content-Type": "application/json" },
-            body: userId ? undefined : JSON.stringify({ accountId: id }),
-        });
+        // Optimistic UI — remove immediately
+        const prev = accounts;
+        setAccounts(prev.filter((a) => a.id !== id));
 
-        if (!res.ok) {
-            const j = await res.json().catch(() => ({}));
+        const url = userId ? `/api/admin/users/${userId}/accounts/${id}` : `/api/user/self/accounts`;
+        const init: RequestInit = userId
+            ? { method: "DELETE" }
+            : { method: "DELETE", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ accountId: id }) };
+
+        try {
+            const res = await fetch(url, init);
+            if (!res.ok) {
+                throw new Error((await res.json().catch(() => ({})))?.error ?? "Failed to unlink");
+            }
+
+            // Re-render server components so the Connect buttons become visible again
+            startTransition(() => router.refresh()); // NEW
+
+            // Optional: also reload here so this client list is fresh right now
+            // await load();
+        } catch (e) {
+            // Roll back on failure
+            setAccounts(prev);
             showMessageBox({
                 variant: "error",
                 title: "Problem",
-                message: j?.error ?? "Failed to unlink",
+                message: e instanceof Error ? e.message : "Failed to unlink",
                 buttonText: "Close",
             });
-            return;
         }
-        load();
     }
 
     useEffect(() => {
@@ -105,16 +119,7 @@ export default function ConnectedAccountsPanel({ userId, showConnectButtons = tr
         <div className="space-y-2">
             <h2 className="font-semibold">Linked accounts</h2>
 
-            {/* optional connect buttons only for self profile — keep page in charge of rendering them */}
-            {!userId && showConnectButtons && (
-                <div className="flex gap-3">
-                    {/* Intentionally left to the page to render e.g.
-                    <ConnectMicrosoftButton />
-                    <ConnectGoogleButton />
-                    <ConnectSteamButton />
-           */}
-                </div>
-            )}
+            {/* The page renders connect buttons; we refresh the page so it recomputes after unlink */}
 
             {accounts.map((a) => (
                 <div key={a.id} className="flex items-center justify-between rounded border px-3 py-2">
@@ -122,7 +127,15 @@ export default function ConnectedAccountsPanel({ userId, showConnectButtons = tr
                         <span className="w-6 h-6 grid place-items-center rounded-full bg-gray-600 text-white text-xs uppercase">
                             {providerInitial(a.provider)}
                         </span>
-                        {a.picture ? <img src={a.picture} alt={`${providerLabel(a.provider)} avatar`} className="w-6 h-6 rounded-full" /> : null}
+                        {a.picture ? (
+                            <Image
+                                src={a.picture || "/favicon.ico"}
+                                alt={a.label || a.providerAccountId}
+                                width={48}
+                                height={48}
+                                className="rounded-full ring-1 ring-gray-200"
+                            />
+                        ) : null}
                         <div className="flex flex-col">
                             <div className="font-medium">{providerLabel(a.provider)}</div>
                             <div className="text-sm opacity-75 font-mono">{a.label ?? a.providerAccountId}</div>
@@ -130,14 +143,14 @@ export default function ConnectedAccountsPanel({ userId, showConnectButtons = tr
                     </div>
 
                     {a.provider === ProviderId.Steam && a.providerAccountId && (
-                        <Button onClick={() => router.push("/profile/steam")} className="w-full py-2 px-4" title="View">
+                        <Button onClick={() => router.push("/profile/steam")} className="py-2 px-4" title="View">
                             View Steam Profile
                         </Button>
                     )}
 
                     {allowUnlink && (
-                        <button className="text-sm underline" onClick={() => unlink(a.id)}>
-                            Unlink
+                        <button className="text-sm underline disabled:opacity-60" onClick={() => unlink(a.id)} disabled={isPending}>
+                            {isPending ? "Unlinking…" : "Unlink"}
                         </button>
                     )}
                 </div>
