@@ -1,22 +1,18 @@
 // src/app/api/auth/steam-bridge/[...slug]/route.ts
+
 import type { NextRequest } from "next/server";
 
-// Next 15: params is async. Await it.
 export async function GET(req: NextRequest, ctx: { params: Promise<{ slug?: string[] }> }) {
     const { slug } = await ctx.params;
-    const provider = slug?.[slug.length - 1] ?? "steam"; // use last segment, default steam
+    const provider = slug?.[slug.length - 1] ?? "steam";
 
     const url = new URL(req.url);
-    const search = url.searchParams;
-    // Make Auth.js v5 happy:
-    search.set("code", "123");
-
+    url.searchParams.set("code", "123"); // placeholder to satisfy Auth.js v5
     const dest = new URL(`/api/auth/callback/${provider}`, process.env.NEXTAUTH_URL);
-    dest.search = search.toString();
+    dest.search = url.searchParams.toString();
     return Response.redirect(dest.toString());
 }
 
 export async function POST() {
-    // “fake token” endpoint expected by the provider
-    return Response.json({ token: "123" });
+    return Response.json({ token: "123" }); // what the provider expects
 }

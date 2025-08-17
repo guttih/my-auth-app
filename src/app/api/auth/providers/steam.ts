@@ -3,8 +3,7 @@ import SteamProvider from "steam-next-auth";
 
 const steamProvider = (req: Request) =>
     SteamProvider(req, {
-        clientSecret: process.env.STEAM_SECRET!,
-        // ⬇️ no trailing /steam here
+        clientSecret: process.env.STEAM_API_KEY!,
         callbackUrl: `${process.env.NEXTAUTH_URL}/api/auth/steam-bridge`,
     });
 

@@ -18,7 +18,7 @@ export function globalProviders() {
     const credentials = envBool(process.env.AUTH_CREDENTIALS_ENABLED, true);
     const microsoft = !!(process.env.AZURE_AD_CLIENT_ID && process.env.AZURE_AD_CLIENT_SECRET);
     const google = !!(process.env.GOOGLE_CLIENT_ID && process.env.GOOGLE_CLIENT_SECRET);
-    const steam = !!process.env.STEAM_SECRET; // Steam is OpenID; your lib uses this app-local secret
+    const steam = !!process.env.STEAM_API_KEY;
 
     const disablePasswordWhenLinked = envBool(process.env.DISABLE_PASSWORD_WHEN_LINKED_ACCOUNT, false);
 

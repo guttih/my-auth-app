@@ -3,9 +3,10 @@
 import NextAuth from "next-auth";
 import { PrismaAdapter } from "@auth/prisma-adapter";
 import { prisma } from "@/lib/prisma";
-import getProviders from "@/app/api/auth/providers"; // your factory
+import getProviders from "@/app/api/auth/providers";
 import type { Role, Theme } from "@prisma/client";
 import type { User } from "next-auth";
+import { getPlayerSummary } from "@/lib/steam";
 
 // ---------- Early sanity checks ----------
 if (process.env.NODE_ENV === "production" && !process.env.NEXTAUTH_SECRET) {
@@ -138,8 +139,25 @@ export const {
             // eslint-disable-next-line no-console
             console.log(`User ${user.id} signed in with provider ${account?.provider}`);
         },
-        async linkAccount() {
-            /* no-op for now */
+        async linkAccount({ user, account }) {
+            if (account?.provider === "steam") {
+                try {
+                    const s = await getPlayerSummary(account.providerAccountId);
+                    // we could enrich the db, but not sure about the logic
+                    // if (s) {
+                    //     await prisma.user.update({
+                    //         where: { id: user.id },
+                    //         data: {
+                    //             // Don't stomp user-chosen values
+                    //             profileImage: s.avatarfull ?? undefined,
+                    //             username: user.username ?? s.personaname ?? undefined,
+                    //         },
+                    //     });
+                    // }
+                } catch {
+                    /* ignore failures; Steam can be private */
+                }
+            }
         },
     },
 }));

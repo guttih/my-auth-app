@@ -5,6 +5,8 @@ import { useEffect, useState } from "react";
 import { confirmDialog } from "../ui/ConfirmDialog/ConfirmDialog";
 import { showMessageBox } from "@/components/ui/MessageBox/MessageBox";
 import { ProviderId } from "@/lib/auth/provider-ids";
+import { Button } from "../ui/Button/Button";
+import { redirect } from "next/navigation";
 
 type OAuthProviderId = typeof ProviderId.Google | typeof ProviderId.AzureAd | typeof ProviderId.Steam;
 
@@ -125,6 +127,12 @@ export default function ConnectedAccountsPanel({ userId, showConnectButtons = tr
                             <div className="text-sm opacity-75 font-mono">{a.label ?? a.providerAccountId}</div>
                         </div>
                     </div>
+
+                    {a.provider === ProviderId.Steam && a.providerAccountId && (
+                        <Button onClick={() => redirect("/profile/steam")} className="w-full py-2 px-4" title="View your Steam profile">
+                            View Steam Profile
+                        </Button>
+                    )}
 
                     {allowUnlink && (
                         <button className="text-sm underline" onClick={() => unlink(a.id)}>
