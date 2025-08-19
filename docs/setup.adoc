@@ -110,9 +110,6 @@ Install packages and set up Prisma:
 ----
 npm install
 
-# If you don't have prisma/schema.prisma yet:
-npx prisma init    # creates prisma/schema.prisma and .env examples
-
 # Run migrations and generate the client
 npx prisma migrate dev --name init
 npx prisma generate
